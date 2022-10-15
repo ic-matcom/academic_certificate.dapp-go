@@ -1,4 +1,4 @@
-# 🛰 GitHub Template DApp for Hyperledger Fabric
+# 🛰 The “Academic Certificate” DApp Enables Communication With Hyperledger Fabric Blockchain Network 
 
 DApp to communicate with Hyperledger Fabric Blockchain Network
 
