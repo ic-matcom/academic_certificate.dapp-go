@@ -1,0 +1,87 @@
+# ***** certificateAuthorities section *****
+# The test-network-nano-bash does not start the Fabric-CA node, but we must keep the 
+# certificateAuthorities section
+
+#certificateAuthorities:
+#  ca.org1.example.com:
+#    tlsCACerts:
+#      path: /home/user/fabric-folder/fabric-testnet-nano-without-syschannel/crypto-config/peerOrganizations/org1.example.com/ca/ca.org1.example.com-cert.pem
+#    url: https://org1.example.com:7054
+#    registrar:
+#      enrollId: admin
+#      enrollSecret: adminpw
+#    httpOptions:
+#      verify: false
+channels:
+  mychannel:
+    peers:
+      peer1.org1.com:
+        chaincodeQuery: true
+        endorsingPeer: true
+        eventSource: true
+        ledgerQuery: true
+    orderers:
+    - orderer1
+client:
+  organization: org1
+  connection:
+    timeout:
+      peer:
+        endorser: '300'
+
+orderers:
+  orderer1:
+    tlsCACerts:
+      path: /home/user/fabric-folder/fabric-testnet-nano-without-syschannel/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
+    # url: orderer.example.com:6050
+    url: 127.0.0.1:6050
+organizations:
+  org1:
+    mspid: Org1MSP
+    certificateAuthorities:
+      - ca.org1.example.com
+    # cryptoPath: /mnt/d/Source/Go/src/api.dapp/crypmaterials/msp/Admin@org1.example.com/msp
+    cryptoPath: /home/user/fabric-folder/fabric-testnet-nano-without-syschannel/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp
+    peers:
+      - peer1.org1.com
+peers:
+  peer1.org1.com:
+    tlsCACerts:
+      path: /home/user/fabric-folder/fabric-testnet-nano-without-syschannel/crypto-config/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
+    # url: peer0.org1.example.com:7051
+    url: 127.0.0.1:7051
+version: 1.1.0%
+
+entityMatchers:
+  peer:
+    - pattern: peer0.org1.example.(\w+)
+      urlSubstitutionExp: localhost:7051
+      sslTargetOverrideUrlSubstitutionExp: peer0.org1.example.com
+      mappedHost: peer0.org1.example.com
+
+    - pattern: (\w+).org1.example.(\w+):(\d+)
+      urlSubstitutionExp: localhost:${2}
+      sslTargetOverrideUrlSubstitutionExp: ${1}.org1.example.com
+      mappedHost: ${1}.org1.example.com
+
+    - pattern: (\w+):7051
+      urlSubstitutionExp: localhost:7051
+      sslTargetOverrideUrlSubstitutionExp: peer0.org1.example.com
+      mappedHost: peer0.org1.example.com
+
+  orderer:
+    - pattern: (\w+).example.(\w+)
+      urlSubstitutionExp: localhost:6050
+      sslTargetOverrideUrlSubstitutionExp: orderer.example.com
+      mappedHost: orderer.example.com
+
+    - pattern: (\w+).example.(\w+):(\d+)
+      urlSubstitutionExp: localhost:6050
+      sslTargetOverrideUrlSubstitutionExp: orderer.example.com
+      mappedHost: orderer.example.com
+
+  certificateAuthority:
+    - pattern: (\w+).org1.example.(\w+)
+      urlSubstitutionExp: https://localhost:7054
+      sslTargetOverrideUrlSubstitutionExp: org1.example.com
+      mappedHost: ca.org1.example.com

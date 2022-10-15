@@ -1,0 +1,38 @@
+# =====   ENVIRONMENT  =======
+Debug: true
+# APIDocIP: 127.0.0.1            # Ip to expose the api documentation (currently unused)
+DappPort: 7001                 # The port this dapp will be running on
+
+# =====   Cryptographic configuration  =======
+TkMaxAge: 180
+
+# =====   STORE DB  =======
+
+StoreDBPath: "./db/data.db"       # buntdb DB file location
+
+
+# =====   CRON JOB  =======
+# A periodic task
+
+# active the cron job
+CronEnabled: false
+
+# LogEvent Database
+LogDBPath: "./db/event_log.db"    # buntdb DB for history/audit event log
+
+# time interval (in seconds) that the cron task is executed
+EveryTime: 30
+
+# 5 minutes  => 300  seconds
+# 15 minutes => 900  seconds
+# 15 minutes => 1800 seconds
+# 1 hour     => 3600 seconds
+
+
+# ====  BLOCKCHAIN CONF ====
+
+CppPath: "./conf/cpp.yaml"              # cpp = connection profile
+
+WalletFolder: "/mnt/d/Source/Go/src/api.dapp/crypmaterials"
+DappIdentityUser: "User1"                          # dapp user identity to authenticate normal dapp ops in the HLF network
+DappIdentityAdmin: "Admin"                         # dapp admin identity to authenticate admin dapp ops in the HLF network

@@ -1,0 +1,21 @@
+version: '2.1'
+
+services:
+  app:
+    container_name: app_server_0
+    image: app_restapi:latest
+    ports:
+      - 7001:7001
+    volumes:
+      - ./db:/app/db
+      - ./conf/conf.docker.yaml:/app/conf/conf.yaml
+    environment:
+      SERVER_CONFIG: /app/conf/conf.yaml
+    restart: on-failure
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - -O
+        - '-'
+        - http://localhost:7001/status

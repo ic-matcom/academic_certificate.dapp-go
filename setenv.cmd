@@ -1,0 +1,1 @@
+set SERVER_CONFIG="%cd%\conf\conf.yaml"

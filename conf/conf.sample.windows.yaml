@@ -1,0 +1,26 @@
+# ENVIRONMENT
+Debug: true
+DappPort: 8081                                                     # The port this dapp will be running on
+
+# Cryptographic configuration
+TkMaxAge: 180
+
+# SISEC Auth Provider
+SisecURL: "http://192.168.49.128:3008/sisec/mock/login"             # mock url "http://192.168.49.128:3008/sisec/mock/login" | "https://sisec.tm.cupet.cu/api/v1/oauth/token"
+
+# Nomenclature Data provider URL
+NomenclatureServiceURL: "http://172.18.210.14:5001/Product"          # "http://localhost:3008" (only test)
+NomenclatureServicePass: "fake_pass"
+NomenclatureServiceClientID: "fake_id"
+
+# IPFS
+IpfsRoot: "/ipfs"
+IpfsAddress: "http://192.168.49.130:5001"                           # IPFS API Address
+IpfsGateway: "http://192.168.49.130:8080"                           # IPFS HTTP Gateway to access upload files
+
+# HLF Network & Crypto Materials
+CppPath: "conf/cpp.sample.windows.yaml"              # cpp = connection profile
+
+WalletFolder: "D:\\Source\\Go\\src\\api.hlf.dapp\\crypmaterials"
+DappIdentityUser: "User1"                          # dapp user identity to authenticate normal dapp ops in the HLF network
+DappIdentityAdmin: "Admin"                         # dapp admin identity to authenticate admin dapp ops in the HLF network
