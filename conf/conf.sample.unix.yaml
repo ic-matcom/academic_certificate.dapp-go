@@ -33,6 +33,6 @@ EveryTime: 30
 
 CppPath: "./conf/cpp.yaml"              # cpp = connection profile
 
-WalletFolder: "/mnt/d/Source/Go/src/api.dapp/crypmaterials"
+WalletFolder: "./wallet"
 DappIdentityUser: "User1"                          # dapp user identity to authenticate normal dapp ops in the HLF network
 DappIdentityAdmin: "Admin"                         # dapp admin identity to authenticate admin dapp ops in the HLF network
