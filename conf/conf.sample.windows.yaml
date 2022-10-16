@@ -21,6 +21,6 @@ IpfsGateway: "http://192.168.49.130:8080"                           # IPFS HTTP 
 # HLF Network & Crypto Materials
 CppPath: "conf/cpp.sample.windows.yaml"              # cpp = connection profile
 
-WalletFolder: "D:\\Source\\Go\\src\\api.hlf.dapp\\crypmaterials"
+WalletFolder: "wallet"
 DappIdentityUser: "User1"                          # dapp user identity to authenticate normal dapp ops in the HLF network
 DappIdentityAdmin: "Admin"                         # dapp admin identity to authenticate admin dapp ops in the HLF network
