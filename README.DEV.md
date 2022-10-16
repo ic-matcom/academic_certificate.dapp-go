@@ -13,7 +13,7 @@
 
 ## 🛠️️ Configuration file (conf.yaml) <a name="config_file"></a>
 
-👉🏾 [The config file](/conf/conf.yaml)
+👉🏾 [The config file](/conf/conf.sample.unix.yaml)
 
 | Param       | Description                                               | default value                 |
 |-------------|-----------------------------------------------------------|-------------------------------|
