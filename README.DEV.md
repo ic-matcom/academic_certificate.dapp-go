@@ -27,7 +27,7 @@
 Download the github.template-fabric.dapp-go project and move to root of project:
 
 ```bash
-git clone https://github.com/kmilodenisglez/github.template-fabric.dapp-go.git && cd github.template-fabric.dapp-go 
+git clone https://github.com/ic-matcom/academic_certificate.dapp-go.git && cd academic_certificate.dapp-go
 ```
 
 ### 🚀 Start DApp in dev mode <a name="dev_ways"></a>
