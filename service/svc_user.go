@@ -5,6 +5,7 @@ import (
 	"dapp/repo"
 	"dapp/schema"
 	"dapp/schema/dto"
+
 	"github.com/kataras/iris/v12"
 )
 
@@ -17,6 +18,7 @@ type ISvcUser interface {
 	GetUserSvc(userID string) (dto.User, *dto.Problem)
 	GetUsersSvc() (*[]any, *dto.Problem)
 	PutUserSvc(userID string, request dto.UserUpdateRequest) (any, *dto.Problem)
+	PostUserSvc(user dto.User) (any, *dto.Problem)
 }
 
 type svcUser struct {
@@ -61,4 +63,21 @@ func (s *svcUser) PutUserSvc(userID string, request dto.UserUpdateRequest) (any,
 		return repo.UsersById[userID], nil
 	}
 	return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, "user not exist")
+}
+
+func (s *svcUser) PostUserSvc(user dto.User) (any, *dto.Problem) {
+	if _, exists := s.repoUser.TryGetUser(user.Email); exists {
+		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, "user already exist")
+	}
+
+	passPhraseEncoded, _ := lib.Checksum("SHA256", []byte(user.Passphrase))
+	user.Passphrase = passPhraseEncoded
+
+	if !s.repoUser.AddUser(user) {
+		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, "there was a problem adding user")
+	}
+
+	// userResponse := dto.MapUser2UserResponse(user)
+	userResponse := user
+	return userResponse, nil
 }

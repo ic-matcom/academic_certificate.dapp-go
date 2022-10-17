@@ -9,12 +9,11 @@ type User struct {
 	Email      string `json:"e-mail" validate:"required,email"`
 }
 
-
 type UserResponse struct {
-	Username   string `json:"username" validate:"required"`
-	FirstName  string `json:"firstname" validate:"required"`
-	LastName   string `json:"lastname" validate:"required"`
-	Email      string `json:"e-mail" validate:"required,email"`
+	Username  string `json:"username" validate:"required"`
+	FirstName string `json:"firstname" validate:"required"`
+	LastName  string `json:"lastname" validate:"required"`
+	Email     string `json:"e-mail" validate:"required,email"`
 }
 
 // UserUpdateRequest struct: For demonstration purposes only
@@ -24,4 +23,13 @@ type UserUpdateRequest struct {
 	Passphrase string `json:"passphrase" validate:"required"`
 	FirstName  string `json:"firstname" validate:"required"`
 	LastName   string `json:"lastname" validate:"required"`
+}
+
+func MapUser2UserResponse(user User) UserResponse {
+	return UserResponse{
+		Username:  user.Username,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Email:     user.Email,
+	}
 }
