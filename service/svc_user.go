@@ -77,7 +77,6 @@ func (s *svcUser) PostUserSvc(user dto.User) (any, *dto.Problem) {
 		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, "there was a problem adding user")
 	}
 
-	// userResponse := dto.MapUser2UserResponse(user)
-	userResponse := user
+	userResponse := dto.MapUser2UserResponse(user)
 	return userResponse, nil
 }
