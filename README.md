@@ -33,7 +33,7 @@ DApp to communicate with Hyperledger Fabric Blockchain Network
 Download the github.template-fabric.dapp-go project and move to root of project:
 
 ```bash
-git clone https://github.com/kmilodenisglez/github.template-fabric.dapp-go.git && cd github.template-fabric.dapp-go 
+git clone https://github.com/ic-matcom/academic_certificate.dapp-go.git && cd academic_certificate.dapp-go 
 ```
 
 ### 🚀 Deployment ways (2 ways)  <a name="deploy_ways"></a>
