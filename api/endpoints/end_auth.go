@@ -82,7 +82,7 @@ func NewAuthHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 			guardUserManagerRouter.Get("/{id:string}", hero.Handler(h.getUserById))
 			guardUserManagerRouter.Put("/{id:string}", hero.Handler(h.putUserById))
 			guardUserManagerRouter.Post("", hero.Handler(h.postUser))
-
+			guardUserManagerRouter.Delete("/{id:string}", hero.Handler(h.deleteUserById))
 			// TODO: missing to finish (Create and Delete)
 			// POST: /users | createUser()
 			// DELETE: /users/:id | deleteUser()
@@ -283,6 +283,32 @@ func (h HAuth) postUser(ctx iris.Context, service service.ISvcUser) {
 	}
 
 	response, problem := service.PostUserSvc(requestData)
+	if problem != nil {
+		(*h.response).ResErr(problem, &ctx)
+		return
+	}
+	h.response.ResOKWithData(response, &ctx)
+}
+
+// deleteUser Delete user.
+// @Tags Users
+// @Security ApiKeyAuth
+// @Produce  json
+// @Param Authorization header string    true  "Insert access token" default(Bearer <Add access token here>)
+// @Param   id          path   string    true  "The unique identifier for the user within the account"     Format(string)
+// @Success 200 {object} dto.UserResponse "OK"
+// @Failure 401 {object} dto.Problem "err.unauthorized"
+// @Failure 500 {object} dto.Problem "err.generic
+// @Router /users/{id} [delete]
+func (h HAuth) deleteUserById(ctx iris.Context, service service.ISvcUser) {
+	// checking param
+	userID := ctx.Params().GetString("id")
+	if userID == "" {
+		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
+		return
+	}
+
+	response, problem := service.DeleteUserSvc(userID)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return

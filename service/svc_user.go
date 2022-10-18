@@ -15,10 +15,11 @@ import (
 type ISvcUser interface {
 	// user functions
 
-	GetUserSvc(userID string) (dto.User, *dto.Problem)
+	GetUserSvc(userID string) (dto.UserResponse, *dto.Problem)
 	GetUsersSvc() (*[]any, *dto.Problem)
-	PutUserSvc(userID string, request dto.UserUpdateRequest) (any, *dto.Problem)
-	PostUserSvc(user dto.User) (any, *dto.Problem)
+	PutUserSvc(userID string, request dto.UserUpdateRequest) (dto.UserResponse, *dto.Problem)
+	PostUserSvc(user dto.User) (dto.UserResponse, *dto.Problem)
+	DeleteUserSvc(userID string) (dto.UserResponse, *dto.Problem)
 }
 
 type svcUser struct {
@@ -34,12 +35,12 @@ func NewSvcUserReqs(repoUser *repo.RepoUser) ISvcUser {
 
 // region ======== METHODS ======================================================
 
-func (s *svcUser) GetUserSvc(userID string) (dto.User, *dto.Problem) {
+func (s *svcUser) GetUserSvc(userID string) (dto.UserResponse, *dto.Problem) {
 	res, err := (*s.repoUser).GetUser(userID)
 	if err != nil {
-		return dto.User{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
+		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
-	return res, nil
+	return dto.MapUser2UserResponse(res), nil
 }
 
 func (s *svcUser) GetUsersSvc() (*[]any, *dto.Problem) {
@@ -50,33 +51,28 @@ func (s *svcUser) GetUsersSvc() (*[]any, *dto.Problem) {
 	return &res, nil
 }
 
-func (s *svcUser) PutUserSvc(userID string, request dto.UserUpdateRequest) (any, *dto.Problem) {
-	if _, exists := repo.UsersById[userID]; exists {
-		repo.UsersById[userID] = dto.User{
-			Username:   request.Username,
-			Passphrase: request.Passphrase,
-			FirstName:  request.FirstName,
-			LastName:   request.LastName,
-			Email:      userID,
-		}
-
-		return repo.UsersById[userID], nil
+func (s *svcUser) PutUserSvc(userID string, request dto.UserUpdateRequest) (dto.UserResponse, *dto.Problem) {
+	res, err := s.repoUser.UpdateUser(userID, request)
+	if err != nil {
+		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
-	return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, "user not exist")
+	return dto.MapUser2UserResponse(res), nil
 }
 
-func (s *svcUser) PostUserSvc(user dto.User) (any, *dto.Problem) {
-	if _, exists := s.repoUser.TryGetUser(user.Email); exists {
-		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, "user already exist")
+func (s *svcUser) PostUserSvc(user dto.User) (dto.UserResponse, *dto.Problem) {
+	passphraseEncoded, _ := lib.Checksum("SHA256", []byte(user.Passphrase))
+	user.Passphrase = passphraseEncoded
+	res, err := s.repoUser.AddUser(user)
+	if err != nil {
+		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
+	return dto.MapUser2UserResponse(res), nil
+}
 
-	passPhraseEncoded, _ := lib.Checksum("SHA256", []byte(user.Passphrase))
-	user.Passphrase = passPhraseEncoded
-
-	if !s.repoUser.AddUser(user) {
-		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, "there was a problem adding user")
+func (s *svcUser) DeleteUserSvc(userID string) (dto.UserResponse, *dto.Problem) {
+	res, err := s.repoUser.RemoveUser(userID)
+	if err != nil {
+		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
-
-	userResponse := dto.MapUser2UserResponse(user)
-	return userResponse, nil
+	return dto.MapUser2UserResponse(res), nil
 }

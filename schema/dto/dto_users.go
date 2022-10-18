@@ -33,3 +33,13 @@ func MapUser2UserResponse(user User) UserResponse {
 		Email:     user.Email,
 	}
 }
+
+func MapUserUpd2User(userID string, user UserUpdateRequest) User {
+	return User{
+		Username:   user.Username,
+		Passphrase: user.Passphrase,
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
+		Email:      userID,
+	}
+}

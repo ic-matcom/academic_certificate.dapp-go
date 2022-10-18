@@ -56,21 +56,48 @@ func (r *RepoUser) GetUsers() ([]any, error) {
 // argument return the user, if no user found then return an empty user.
 func (r *RepoUser) TryGetUser(userID string) (dto.User, bool) {
 	user, exists := UsersById[userID]
+	if !exists {
+		return dto.User{}, exists
+	}
 	return user.(dto.User), exists
 }
 
+// Check if exist a user with id userID
+func (r *RepoUser) ExistUser(userID string) bool {
+	_, exists := r.TryGetUser(userID)
+	return exists
+}
+
 // Add the user to database
-// Returns a bool that reflect if user was added correctly.
-func (r *RepoUser) AddUser(user dto.User) bool {
+// Returns nil if user was added correctly, otherwise return error found
+func (r *RepoUser) AddUser(user dto.User) (dto.User, error) {
+	if r.ExistUser(user.Email) {
+		return dto.User{}, fmt.Errorf("can't add the user, already exist a user with id: %s", user.Email)
+	}
 	UsersById[user.Email] = user
-	return true
+	return user, nil
+}
+
+// Update user with id UserID to new data in database
+// Returns a bool that reflect if user was updated correctly.
+func (r *RepoUser) UpdateUser(userID string, userUpd dto.UserUpdateRequest) (dto.User, error) {
+	if !r.ExistUser(userID) {
+		return dto.User{}, fmt.Errorf("can't update the user, no user found with id: %s", userID)
+	}
+	user := dto.MapUserUpd2User(userID, userUpd)
+	UsersById[userID] = user
+	return user, nil
 }
 
 // Remove user from database
 // Returns a bool that reflect if user was removed correctly.
-func (r *RepoUser) RemoveUser(user dto.User) bool {
-	delete(UsersById, user.Email)
-	return true
+func (r *RepoUser) RemoveUser(userID string) (dto.User, error) {
+	user, exist := r.TryGetUser(userID)
+	if !exist {
+		return dto.User{}, fmt.Errorf("can't remove the user, no user found with id: %s", userID)
+	}
+	delete(UsersById, userID)
+	return user, nil
 }
 
 func fakeUsers() {
