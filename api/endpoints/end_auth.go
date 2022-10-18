@@ -83,9 +83,6 @@ func NewAuthHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 			guardUserManagerRouter.Put("/{id:string}", hero.Handler(h.putUserById))
 			guardUserManagerRouter.Post("", hero.Handler(h.postUser))
 			guardUserManagerRouter.Delete("/{id:string}", hero.Handler(h.deleteUserById))
-			// TODO: missing to finish (Create and Delete)
-			// POST: /users | createUser()
-			// DELETE: /users/:id | deleteUser()
 
 			// --- DEPENDENCIES ---
 			hero.Register(repoUser)

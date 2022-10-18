@@ -34,7 +34,7 @@ func NewRepoUser(svcConf *utils.SvcConfig) *RepoUser {
 // In-memory storage
 // replace later with some db
 
-var UsersById map[string]any
+var UsersById map[string]dto.User
 
 // GetUser get the user from the DB
 func (r *RepoUser) GetUser(userID string) (dto.User, error) {
@@ -46,7 +46,7 @@ func (r *RepoUser) GetUser(userID string) (dto.User, error) {
 }
 
 // GetUsers return a list of dto.User
-func (r *RepoUser) GetUsers() ([]any, error) {
+func (r *RepoUser) GetUsers() ([]dto.User, error) {
 	res := lib.MapToSliceOfValues(UsersById)
 	return res, nil
 }
@@ -59,7 +59,7 @@ func (r *RepoUser) TryGetUser(userID string) (dto.User, bool) {
 	if !exists {
 		return dto.User{}, exists
 	}
-	return user.(dto.User), exists
+	return user, exists
 }
 
 // Check if exist a user with id userID
@@ -124,7 +124,7 @@ func fakeUsers() {
 		},
 	}
 
-	UsersById = make(map[string]any)
+	UsersById = make(map[string]dto.User)
 	for _, user := range users {
 		UsersById[user.Email] = user
 	}

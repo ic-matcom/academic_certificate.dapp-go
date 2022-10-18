@@ -16,7 +16,7 @@ type ISvcUser interface {
 	// user functions
 
 	GetUserSvc(userID string) (dto.UserResponse, *dto.Problem)
-	GetUsersSvc() (*[]any, *dto.Problem)
+	GetUsersSvc() (*[]dto.UserResponse, *dto.Problem)
 	PutUserSvc(userID string, request dto.UserUpdateRequest) (dto.UserResponse, *dto.Problem)
 	PostUserSvc(user dto.User) (dto.UserResponse, *dto.Problem)
 	DeleteUserSvc(userID string) (dto.UserResponse, *dto.Problem)
@@ -43,12 +43,16 @@ func (s *svcUser) GetUserSvc(userID string) (dto.UserResponse, *dto.Problem) {
 	return dto.MapUser2UserResponse(res), nil
 }
 
-func (s *svcUser) GetUsersSvc() (*[]any, *dto.Problem) {
+func (s *svcUser) GetUsersSvc() (*[]dto.UserResponse, *dto.Problem) {
 	res, err := (*s.repoUser).GetUsers()
 	if err != nil {
 		return nil, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
-	return &res, nil
+	usersResponse := []dto.UserResponse{}
+	for i := 0; i < len(res); i++ {
+		usersResponse = append(usersResponse, dto.MapUser2UserResponse(res[i]))
+	}
+	return &usersResponse, nil
 }
 
 func (s *svcUser) PutUserSvc(userID string, request dto.UserUpdateRequest) (dto.UserResponse, *dto.Problem) {
