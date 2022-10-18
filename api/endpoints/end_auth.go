@@ -79,9 +79,9 @@ func NewAuthHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 		guardUserManagerRouter := v1.Party("/users")
 		{
 			guardUserManagerRouter.Get("", hero.Handler(h.getUsers))
+			guardUserManagerRouter.Post("", hero.Handler(h.postUser))
 			guardUserManagerRouter.Get("/{id:string}", hero.Handler(h.getUserById))
 			guardUserManagerRouter.Put("/{id:string}", hero.Handler(h.putUserById))
-			guardUserManagerRouter.Post("", hero.Handler(h.postUser))
 			guardUserManagerRouter.Delete("/{id:string}", hero.Handler(h.deleteUserById))
 
 			// --- DEPENDENCIES ---

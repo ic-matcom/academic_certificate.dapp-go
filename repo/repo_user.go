@@ -3,6 +3,7 @@ package repo
 import (
 	"dapp/lib"
 	"dapp/schema/dto"
+	"dapp/schema/mapper"
 	"dapp/service/utils"
 	"fmt"
 	"sync"
@@ -84,7 +85,7 @@ func (r *RepoUser) UpdateUser(userID string, userUpd dto.UserUpdateRequest) (dto
 	if !r.ExistUser(userID) {
 		return dto.User{}, fmt.Errorf("can't update the user, no user found with id: %s", userID)
 	}
-	user := dto.MapUserUpd2User(userID, userUpd)
+	user := mapper.MapUserUpd2User(userID, userUpd)
 	UsersById[userID] = user
 	return user, nil
 }

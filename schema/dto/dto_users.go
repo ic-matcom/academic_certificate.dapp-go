@@ -24,22 +24,3 @@ type UserUpdateRequest struct {
 	FirstName  string `json:"firstname" validate:"required"`
 	LastName   string `json:"lastname" validate:"required"`
 }
-
-func MapUser2UserResponse(user User) UserResponse {
-	return UserResponse{
-		Username:  user.Username,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Email:     user.Email,
-	}
-}
-
-func MapUserUpd2User(userID string, user UserUpdateRequest) User {
-	return User{
-		Username:   user.Username,
-		Passphrase: user.Passphrase,
-		FirstName:  user.FirstName,
-		LastName:   user.LastName,
-		Email:      userID,
-	}
-}

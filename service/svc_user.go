@@ -5,6 +5,7 @@ import (
 	"dapp/repo"
 	"dapp/schema"
 	"dapp/schema/dto"
+	"dapp/schema/mapper"
 
 	"github.com/kataras/iris/v12"
 )
@@ -40,7 +41,7 @@ func (s *svcUser) GetUserSvc(userID string) (dto.UserResponse, *dto.Problem) {
 	if err != nil {
 		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
-	return dto.MapUser2UserResponse(res), nil
+	return mapper.MapUser2UserResponse(res), nil
 }
 
 func (s *svcUser) GetUsersSvc() (*[]dto.UserResponse, *dto.Problem) {
@@ -50,7 +51,7 @@ func (s *svcUser) GetUsersSvc() (*[]dto.UserResponse, *dto.Problem) {
 	}
 	usersResponse := []dto.UserResponse{}
 	for i := 0; i < len(res); i++ {
-		usersResponse = append(usersResponse, dto.MapUser2UserResponse(res[i]))
+		usersResponse = append(usersResponse, mapper.MapUser2UserResponse(res[i]))
 	}
 	return &usersResponse, nil
 }
@@ -60,7 +61,7 @@ func (s *svcUser) PutUserSvc(userID string, request dto.UserUpdateRequest) (dto.
 	if err != nil {
 		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
-	return dto.MapUser2UserResponse(res), nil
+	return mapper.MapUser2UserResponse(res), nil
 }
 
 func (s *svcUser) PostUserSvc(user dto.User) (dto.UserResponse, *dto.Problem) {
@@ -70,7 +71,7 @@ func (s *svcUser) PostUserSvc(user dto.User) (dto.UserResponse, *dto.Problem) {
 	if err != nil {
 		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
-	return dto.MapUser2UserResponse(res), nil
+	return mapper.MapUser2UserResponse(res), nil
 }
 
 func (s *svcUser) DeleteUserSvc(userID string) (dto.UserResponse, *dto.Problem) {
@@ -78,5 +79,5 @@ func (s *svcUser) DeleteUserSvc(userID string) (dto.UserResponse, *dto.Problem) 
 	if err != nil {
 		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
-	return dto.MapUser2UserResponse(res), nil
+	return mapper.MapUser2UserResponse(res), nil
 }
