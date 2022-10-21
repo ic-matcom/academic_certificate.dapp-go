@@ -5,14 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"golang.org/x/text/runes"
-	"golang.org/x/text/transform"
-	"golang.org/x/text/unicode/norm"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
 )
 
 func Contains(arr []string, elem string) bool {
@@ -42,8 +43,8 @@ func MapToSliceOfKey(dMap map[string]string) []string {
 }
 
 // MapToSliceOfValues Convert map to slice of values.
-func MapToSliceOfValues(dMap map[string]any) []any {
-	var values []any
+func MapToSliceOfValues[T any](dMap map[string]T) []T {
+	var values []T
 	for _, value := range dMap {
 		values = append(values, value)
 	}

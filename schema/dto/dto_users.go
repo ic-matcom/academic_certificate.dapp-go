@@ -9,12 +9,11 @@ type User struct {
 	Email      string `json:"e-mail" validate:"required,email"`
 }
 
-
 type UserResponse struct {
-	Username   string `json:"username" validate:"required"`
-	FirstName  string `json:"firstname" validate:"required"`
-	LastName   string `json:"lastname" validate:"required"`
-	Email      string `json:"e-mail" validate:"required,email"`
+	Username  string `json:"username" validate:"required"`
+	FirstName string `json:"firstname" validate:"required"`
+	LastName  string `json:"lastname" validate:"required"`
+	Email     string `json:"e-mail" validate:"required,email"`
 }
 
 // UserUpdateRequest struct: For demonstration purposes only
