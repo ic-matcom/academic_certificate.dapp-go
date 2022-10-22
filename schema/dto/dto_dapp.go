@@ -7,10 +7,10 @@ type StatusMsg struct {
 // CommonHeaders are common to all messages
 type CommonHeaders struct {
 	//ID           string `json:"id,omitempty" example:""`
-	//MsgType      string `json:"type,omitempty" example:""`
-	Signer       string `json:"signer,omitempty" example:""`
-	ChannelID    string `json:"channel" example:"mychannel"`
-	ChaincodeID  string `json:"chaincodeID" example:"basic"`
+	PayloadType  string `json:"payloadType" validate:"required" example:"object"` // object | array
+	Signer       string `json:"signer" validate:"required" example:"User1"`
+	ChannelID    string `json:"channel" validate:"required" example:"mychannel"`
+	ChaincodeID  string `json:"chaincode" validate:"required" example:"traceability"`
 	ContractName string `json:"contractName,omitempty" example:""`
 }
 
@@ -56,9 +56,8 @@ type MapStruct struct {
 type Transaction struct {
 	RequestCommon
 	Function   string `json:"func" validate:"required"`
-	Payload    any    `json:"payload" binding:"required"`
-	IsSchema   bool   `json:"isSchema" binding:"required,boolean"`
-	StrongRead bool   `json:"strongRead" binding:"required,boolean"`
+	Payload    any    `json:"payload,omitempty" swaggertype:"object,string" example:"id:sampleID"`
+	StrongRead bool   `json:"strongRead" binding:"required,boolean" example:"false"`
 }
 
 type QueryResult struct {

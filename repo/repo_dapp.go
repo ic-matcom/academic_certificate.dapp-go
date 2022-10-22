@@ -96,7 +96,7 @@ func (r *RepoDapp) Query(query dto.Transaction, did string) ([]byte, error) {
 	var err error
 	var args_ []string
 
-	if query.IsSchema {
+	if query.Headers.PayloadType == "object" {
 		// if a isSchema is true, the payload property in the body must be a JSON structure
 		argsMap, ok := query.Payload.(map[string]interface{})
 		if !ok {
@@ -136,26 +136,27 @@ func (r *RepoDapp) Query(query dto.Transaction, did string) ([]byte, error) {
 		return res, nil
 	}
 
-	peerEndpoint, err := getFirstPeerEndpointFromConfig(r.configProvider)
+	peerEndpoint, org, err := getFirstPeerEndpointFromConfig(r.configProvider)
 	if err != nil {
 		return nil, err
 	}
 
 	req := channel.Request{
-		ChaincodeID: query.Headers.ContractName,
+		ChaincodeID: query.Headers.ChaincodeID,
 		Fcn:         query.Function,
-		Args:        convert(args_),
+		Args:        convert(args_...),
 	}
 
 	//TODO: then move to struct
 	// prepare contexts
 	// TODO: move to getChannelClient func (uncreated)
-	channelContext := r.sdk.ChannelContext(query.Headers.ChannelID, fabsdk.WithUser(r.DappIdentityUser))//, fabsdk.WithOrg("Org1MSP"))
+	channelContext := r.sdk.ChannelContext(query.Headers.ChannelID, fabsdk.WithUser(query.Headers.Signer), fabsdk.WithOrg(org))
 
-	cClient, _ := r.channelCreator(channelContext)
+	cClient, err := r.channelCreator(channelContext)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create new channel client: %s", err)
 	}
+
 	// TODO: move to getChannelClient func (uncreated)
 	r.channelClient.channelClient = cClient
 	r.channelClient.channelProvider = channelContext
@@ -173,7 +174,7 @@ func (r *RepoDapp) Invoke(query dto.Transaction, did string) ([]byte, error) {
 	var err error
 	var args_ []string
 
-	if query.IsSchema {
+	if query.Headers.PayloadType == "object" {
 		// if a isSchema is true, the payload property in the body must be a JSON structure
 		argsMap, ok := query.Payload.(map[string]interface{})
 		if !ok {
@@ -213,38 +214,37 @@ func (r *RepoDapp) Invoke(query dto.Transaction, did string) ([]byte, error) {
 		return res, nil
 	}
 
-	peerEndpoint, err := getFirstPeerEndpointFromConfig(r.configProvider)
+	peerEndpoint, org, err := getFirstPeerEndpointFromConfig(r.configProvider)
 	if err != nil {
 		return nil, err
 	}
 
 	req := channel.Request{
-		ChaincodeID: query.Headers.ContractName,
+		ChaincodeID: query.Headers.ChaincodeID,
 		Fcn:         query.Function,
-		Args:        convert(args_),
+		Args:        convert(args_...),
 	}
 
 	//TODO: then move to struct
 	// prepare contexts
 	// TODO: move to getChannelClient func (uncreated)
-	channelContext := r.sdk.ChannelContext(query.Headers.ChannelID, fabsdk.WithUser(r.DappIdentityUser))//, fabsdk.WithOrg("Org1MSP"))
+	channelContext := r.sdk.ChannelContext(query.Headers.ChannelID, fabsdk.WithUser(query.Headers.Signer), fabsdk.WithOrg(org))
 
-	cClient, _ := r.channelCreator(channelContext)
+	cClient, err := r.channelCreator(channelContext)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create new channel client: %s", err)
 	}
 	// TODO: move to getChannelClient func (uncreated)
 	r.channelClient.channelClient = cClient
 	r.channelClient.channelProvider = channelContext
 
-	result, err := r.channelClient.channelClient.Query(req, channel.WithRetry(retry.DefaultChannelOpts), channel.WithTargetEndpoints(peerEndpoint))
+	result, err := r.channelClient.channelClient.Execute(req, channel.WithRetry(retry.DefaultChannelOpts), channel.WithTargetEndpoints(peerEndpoint))
 	if err != nil {
 		log.Errorf("Failed to send query [%s:%s:%s]. %s", query.Headers.ChannelID, query.Headers.ContractName, query.Function, err)
 		return nil, err
 	}
 
 	return result.Payload, nil
-
 }
 
 type channelCreator func(context.ChannelProvider) (*channel.Client, error)
@@ -271,7 +271,7 @@ func (r *RepoDapp) getSDKComponents(query dto.Transaction, withAdminIdentity boo
 		gateway.WithConfig(r.configProvider),
 		gateway.WithIdentity(r.Wallet, identityLabel),
 		gateway.WithSDK(r.sdk),
-		)
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -310,32 +310,32 @@ func getOrgFromConfig(config core.ConfigProvider) (string, error) {
 	return value.(string), nil
 }
 
-func getFirstPeerEndpointFromConfig(config core.ConfigProvider) (string, error) {
+func getFirstPeerEndpointFromConfig(config core.ConfigProvider) (string, string, error) {
 	org, err := getOrgFromConfig(config)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	configBackend, _ := config()
 	cfg := configBackend[0]
 	value, ok := cfg.Lookup(fmt.Sprintf("organizations.%s.peers", org))
 	if !ok {
-		return "", fmt.Errorf("no peers list found in the organization %s", org)
+		return "", "", fmt.Errorf("no peers list found in the organization %s", org)
 	}
 	peers := value.([]interface{})
 	if len(peers) < 1 {
-		return "", fmt.Errorf("peers list for organization %s is empty", org)
+		return "", "", fmt.Errorf("peers list for organization %s is empty", org)
 	}
-	return peers[0].(string), nil
+	return peers[0].(string), org, nil
 }
 
-func convert(args []string) [][]byte {
-	result := [][]byte{}
-	for _, v := range args {
-		result = append(result, []byte(v))
+func convert(args ...string) [][]byte {
+	bytes := make([][]byte, len(args))
+	for i, v := range args {
+		bytes[i] = []byte(v)
 	}
-	return result
+	return bytes
 }
+
 // region ======== Dapp ======================================================
-
 
 // endregion =============================================================================
