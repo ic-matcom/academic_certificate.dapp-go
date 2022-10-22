@@ -142,7 +142,7 @@ func (h HAuth) authIntent(ctx iris.Context, uCred *dto.UserCredIn, svcAuth *auth
 // @Security ApiKeyAuth
 // @Produce  json
 // @Param Authorization header string true "Insert access token" default(Bearer <Add access token here>)
-// @Success 204 "OK"
+// @Success 204 "Everything went fine, nothing to return"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /auth/logout [get]
@@ -204,6 +204,7 @@ func (h HAuth) getUsers(ctx iris.Context, service service.ISvcUser) {
 // @Param Authorization header string  true "Insert access token" default(Bearer <Add access token here>)
 // @Param   id          path   string  true "The unique identifier for the user within the account"     Format(string)
 // @Success 200 {object} dto.UserResponse "OK"
+// @Failure 400 {object} dto.Problem "err.processing_param"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /users/{id} [get]
@@ -231,6 +232,7 @@ func (h HAuth) getUserById(ctx iris.Context, service service.ISvcUser) {
 // @Param   id          path   string  true "The unique identifier for the user within the account"     Format(string)
 // @Param 	Transaction	body   dto.UserUpdateRequest	true	"User Data"
 // @Success 200 {object} dto.UserResponse "OK"
+// @Failure 400 {object} dto.Problem "err.processing_param"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /users/{id} [put]
@@ -265,7 +267,8 @@ func (h HAuth) putUserById(ctx iris.Context, service service.ISvcUser) {
 // @Produce  json
 // @Param Authorization header string    true  "Insert access token" default(Bearer <Add access token here>)
 // @Param 	Transaction	body   dto.User	 true  "User Data"
-// @Success 200 {object} dto.UserResponse "OK"
+// @Success 204 "Everything went fine, nothing to return."
+// @Failure 400 {object} dto.Problem "err.processing_param"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /users [post]
@@ -279,12 +282,12 @@ func (h HAuth) postUser(ctx iris.Context, service service.ISvcUser) {
 		return
 	}
 
-	response, problem := service.PostUserSvc(requestData)
+	_, problem := service.PostUserSvc(requestData)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
 	}
-	h.response.ResOKWithData(response, &ctx)
+	h.response.ResOK(&ctx)
 }
 
 // deleteUser Delete user.
@@ -293,7 +296,7 @@ func (h HAuth) postUser(ctx iris.Context, service service.ISvcUser) {
 // @Produce  json
 // @Param Authorization header string    true  "Insert access token" default(Bearer <Add access token here>)
 // @Param   id          path   string    true  "The unique identifier for the user within the account"     Format(string)
-// @Success 200 {object} dto.UserResponse "OK"
+// @Success 204 "OK"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /users/{id} [delete]
@@ -301,16 +304,16 @@ func (h HAuth) deleteUserById(ctx iris.Context, service service.ISvcUser) {
 	// checking param
 	userID := ctx.Params().GetString("id")
 	if userID == "" {
-		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
+		h.response.ResErr(&dto.Problem{Status: iris.StatusInternalServerError, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
 		return
 	}
 
-	response, problem := service.DeleteUserSvc(userID)
+	_, problem := service.DeleteUserSvc(userID)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
 	}
-	h.response.ResOKWithData(response, &ctx)
+	h.response.ResOK(&ctx)
 }
 
 // endregion =============================================================================
