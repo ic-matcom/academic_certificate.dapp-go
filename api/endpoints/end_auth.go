@@ -198,6 +198,7 @@ func (h HAuth) getUsers(ctx iris.Context, service service.ISvcUser) {
 
 // getUserById Get user by ID
 // @Summary Get user by ID
+// @Description Returns information about an account by ID
 // @Tags Users
 // @Security ApiKeyAuth
 // @Produce  json
