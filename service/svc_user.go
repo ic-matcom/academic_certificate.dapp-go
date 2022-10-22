@@ -49,7 +49,7 @@ func (s *svcUser) GetUsersSvc() (*[]dto.UserResponse, *dto.Problem) {
 	if err != nil {
 		return nil, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
-	usersResponse := []dto.UserResponse{}
+	var usersResponse []dto.UserResponse
 	for i := 0; i < len(res); i++ {
 		usersResponse = append(usersResponse, mapper.MapUser2UserResponse(res[i]))
 	}
