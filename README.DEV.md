@@ -2,6 +2,8 @@
 
 > **NOTE**: This DApp has been tested on **Ubuntu 18.04** and on **Windows 10 with WSL** and Golang 1.18 was used.
 
+👀 [CodeReviewComments](#https://github.com/golang/go/wiki/CodeReviewComments) 👀
+
 ## Table of Contents
 
 - [Configuration file](#config_file)
