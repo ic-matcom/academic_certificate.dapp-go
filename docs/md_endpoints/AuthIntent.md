@@ -2,7 +2,7 @@ Intent to grant authentication using the provider user's credentials and the spe
 
 User Credentials:
 
-|  Username   | Password    | 
-| ----------- | -----------|
+| Username                      | Password  | 
+|-------------------------------|-----------|
 | richard.sargon@meinermail.com | password1 |
-| tom.carter@meinermail.com | password2 |
+| tom.carter@meinermail.com     | password1 |
