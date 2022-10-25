@@ -42,6 +42,15 @@ func NewAuthHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 	svcAuth := auth.NewSvcAuthentication(h.providers, repoUser) // instantiating authentication Service
 	svcUser := service.NewSvcUserReqs(repoUser)
 
+	// --- DEPENDENCIES ---
+	hero.Register(depObtainUserCred)
+	hero.Register(lib.DepObtainUserDid)
+	hero.Register(svcAuth) // as an alternative, we can put these dependencies as property in the struct HAuth, as we are doing in the rest of the endpoints / handlers
+	hero.Register(svcUser)
+	hero.Register(repoUser)
+
+	app.Get("/status", h.statusServer)
+
 	// Simple group: v1
 	v1 := app.Party("/api/v1")
 	{
@@ -49,11 +58,6 @@ func NewAuthHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 		authRouter := v1.Party("/auth") // authorize
 		{
 			// --- GROUP / PARTY MIDDLEWARES ---
-
-			// --- DEPENDENCIES ---
-			hero.Register(depObtainUserCred)
-			hero.Register(svcAuth) // as an alternative, we can put these dependencies as property in the struct HAuth, as we are doing in the rest of the endpoints / handlers
-			hero.Register(svcUser)
 
 			// --- REGISTERING ENDPOINTS ---
 			// authRouter.Post("/<provider>")	// provider is the auth provider to be used.
@@ -65,10 +69,6 @@ func NewAuthHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 		{
 			// --- GROUP / PARTY MIDDLEWARES ---
 			guardAuthRouter.Use(*mdwAuthChecker) // registering access token checker middleware
-
-			// --- DEPENDENCIES ---
-			hero.Register(DepObtainUserDid)
-			hero.Register(svcUser)
 
 			// --- REGISTERING ENDPOINTS ---
 			guardAuthRouter.Get("/logout", h.logout)
@@ -83,11 +83,9 @@ func NewAuthHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 			guardUserManagerRouter.Get("/{id:string}", hero.Handler(h.getUserById))
 			guardUserManagerRouter.Put("/{id:string}", hero.Handler(h.putUserById))
 			guardUserManagerRouter.Delete("/{id:string}", hero.Handler(h.deleteUserById))
-
-			// --- DEPENDENCIES ---
-			hero.Register(repoUser)
 		}
 	}
+
 	return h
 }
 
@@ -142,6 +140,7 @@ func (h HAuth) authIntent(ctx iris.Context, uCred *dto.UserCredIn, svcAuth *auth
 // @Security ApiKeyAuth
 // @Produce  json
 // @Param Authorization header string true "Insert access token" default(Bearer <Add access token here>)
+
 // @Success 204 "Everything went fine, nothing to return"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
@@ -315,6 +314,10 @@ func (h HAuth) deleteUserById(ctx iris.Context, service service.ISvcUser) {
 		return
 	}
 	h.response.ResOK(&ctx)
+}
+
+func (h HAuth) statusServer(ctx iris.Context) {
+	h.response.ResOKWithData(dto.StatusMsg{OK: true}, &ctx)
 }
 
 // endregion =============================================================================
