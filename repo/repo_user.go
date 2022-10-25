@@ -26,8 +26,8 @@ func NewRepoUser(svcConf *utils.SvcConfig) *RepoUser {
 	onceRU.Do(func() {
 		singletonRU = &RepoUser{DBLocation: svcConf.StoreDBPath}
 
-		// TODO: "fakeUsers" is only for demo purpose. Save users in In-memory.
-		fakeUsers()
+		// TODO: "FakeUsers" is only for demo purpose. Save users in In-memory.
+		FakeUsers()
 	})
 	return singletonRU
 }
@@ -101,12 +101,11 @@ func (r *RepoUser) tryGetUser(userID string) (dto.User, bool) {
 	return user, exists
 }
 
-func fakeUsers() {
+func FakeUsers() {
 	if len(UsersById) != 0 {
 		return
 	}
 	p1, _ := lib.Checksum("SHA256", []byte("password1"))
-	p2, _ := lib.Checksum("SHA256", []byte("password2"))
 
 	users := []dto.User{
 		{
@@ -118,7 +117,7 @@ func fakeUsers() {
 		},
 		{
 			Username:   "tom.carter@meinermail.com",
-			Passphrase: p2,
+			Passphrase: p1,
 			FirstName:  "Tom",
 			LastName:   "Carter",
 			Email:      "tom.carter@meinermail.com",

@@ -32,7 +32,6 @@ type ccpClientWrapper struct {
 }
 
 type RepoDapp struct {
-	ChannelName       string          // ChannelName HLF channel name
 	CppPath           string          // CppPath path to the connection profile
 	WalletPath        string          // WalletPath path to the wallets folders
 	Wallet            *gateway.Wallet // Wallet with admin privilege identity for admins ops on the network
