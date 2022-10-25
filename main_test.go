@@ -2,10 +2,21 @@ package main
 
 import (
 	"dapp/lib"
+	"dapp/repo"
 	"dapp/schema/dto"
+	"dapp/service"
+	"dapp/service/utils"
+	"fmt"
 	"github.com/go-playground/validator/v10"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/httptest"
+	"reflect"
+	"sort"
+
+	//"reflect"
 	"runtime"
+	"strings"
 
 	"dapp/schema"
 	"os"
@@ -13,7 +24,11 @@ import (
 )
 
 // use a single instance of Validate, it caches struct info
+
+var app *iris.Application
+var appConf *utils.SvcConfig
 var validate *validator.Validate
+var err error
 
 func TestNewApp(t *testing.T) {
 	// set environment variable
@@ -22,30 +37,58 @@ func TestNewApp(t *testing.T) {
 	} else {
 		_ = os.Setenv(schema.EnvConfigPath, "./conf/conf.sample.unix.yaml")
 	}
-	app, _ := newApp()
+	app, appConf = newApp()
 	e := httptest.New(t, app)
+
 	// check server status
 	e.GET("/status").Expect().Status(httptest.StatusOK)
 
+	// init user repo
+	userRepo := repo.NewRepoUser(appConf)
+	userServ := service.NewSvcUserReqs(userRepo)
+
+	// get users list
+	expectedUsers, _ := userServ.GetUsersSvc()
+
 	// without basic auth
-	//e.GET("/api/v1/drones").Expect().Status(httptest.StatusUnauthorized)
-	//e.GET("/api/v1/medications").Expect().Status(httptest.StatusUnauthorized)
+	usersBody := e.GET("/api/v1/users").Expect().Body().Raw()
+	var gotUsers []dto.UserResponse
+	err := jsoniter.UnmarshalFromString(usersBody, &gotUsers)
+	if err != nil {
+		t.Errorf("unmarshal error: %v", err)
+	}
+
+	// sort arrays to avoid deeply equal error
+	sort.Slice(gotUsers, func(p, q int) bool {
+		return gotUsers[p].Username < gotUsers[q].Username
+	})
+
+	sort.Slice(*expectedUsers, func(p, q int) bool {
+		return (*expectedUsers)[p].Username < (*expectedUsers)[q].Username
+	})
+
+	if !reflect.DeepEqual(expectedUsers, &gotUsers) {
+		t.Errorf("got users { %+v } did not match expected users { %+v }", &gotUsers, expectedUsers)
+	}
 
 	// with valid JWT auth
-	//cred := dto.UserCredIn{
-	//	Username: "richard.sargon@meinermail.com",
-	//	Password: "password1",
-	//}
-	//
-	//_ = e.POST("/api/v1/auth").WithJSON(cred).Expect().Status(httptest.StatusOK)
-	//
-	//// with invalid JWT auth
-	//cred = dto.UserCredIn{
-	//	Username: "noexist@meinermail.com",
-	//	Password: "fakepasswd",
-	//}
-	//
-	//_ = e.POST("/api/v1/auth").WithJSON(cred).Expect().Status(httptest.StatusUnauthorized)
+	cred := dto.UserCredIn{
+		Username: (*expectedUsers)[0].Username,
+		Password: "password1",
+	}
+
+	e.POST("/api/v1/auth").WithJSON(cred).Expect().Status(httptest.StatusOK)
+
+	bearer := fmt.Sprintf("Bearer %s", fakeAccessToken((*expectedUsers)[0].Username))
+	e.GET("/api/v1/auth/profile").WithHeader("Authorization", bearer).Expect().Status(httptest.StatusOK)
+
+	// with invalid JWT auth
+	cred = dto.UserCredIn{
+		Username: (*expectedUsers)[0].Username,
+		Password: "fakepasswd",
+	}
+
+	e.POST("/api/v1/auth").WithJSON(cred).Expect().Status(httptest.StatusUnauthorized)
 
 	// user valid
 	userValid := dto.User{
@@ -59,7 +102,7 @@ func TestNewApp(t *testing.T) {
 	validate = validator.New()
 
 	// validate drone fields
-	err := validate.Struct(userValid)
+	err = validate.Struct(userValid)
 	if err != nil {
 		t.Errorf("user %s must be valid", userValid.Username)
 	}
@@ -69,11 +112,21 @@ func TestNewApp(t *testing.T) {
 		Passphrase: lib.GenerateUUIDStr(),
 		FirstName:  "Fake Name",
 		LastName:   "Fake LastName",
-		Email:      "fake-email.com",   // invalid email
+		Email:      "fake-email.com", // invalid email
 	}
-	// validate drone fields
+	// validate user fields
 	err = validate.Struct(userInvalid)
 	if err == nil {
 		t.Errorf("user %s must be invalid", userInvalid.Username)
 	}
+}
+
+func TestListUsers(t *testing.T) {
+
+}
+
+func fakeAccessToken(username string) []byte {
+	tokenData := dto.AccessTokenData{Scope: strings.Fields("dapp.fabric"), Claims: dto.InjectedParam{ID: username, Username: username}}
+	accessToken, _ := lib.MkAccessToken(&tokenData, []byte(appConf.JWTSignKey), appConf.TkMaxAge)
+	return accessToken
 }
