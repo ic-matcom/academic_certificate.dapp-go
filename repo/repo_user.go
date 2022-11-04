@@ -3,7 +3,6 @@ package repo
 import (
 	"dapp/lib"
 	"dapp/schema/dto"
-	"dapp/schema/mapper"
 	"dapp/service/utils"
 	"fmt"
 	"sync"
@@ -26,8 +25,8 @@ func NewRepoUser(svcConf *utils.SvcConfig) *RepoUser {
 	onceRU.Do(func() {
 		singletonRU = &RepoUser{DBLocation: svcConf.StoreDBPath}
 
-		// TODO: "fakeUsers" is only for demo purpose. Save users in In-memory.
-		fakeUsers()
+		// TODO: "FakeUsers" is only for demo purpose. Save users in In-memory.
+		FakeUsers()
 	})
 	return singletonRU
 }
@@ -61,21 +60,21 @@ func (r *RepoUser) ExistUser(userID string) bool {
 // AddUser Add the user to database
 // Returns nil if user was added correctly, otherwise return error found
 func (r *RepoUser) AddUser(user dto.User) (dto.User, error) {
-	if r.ExistUser(user.Email) {
+	if r.ExistUser(user.Username) {
 		return dto.User{}, fmt.Errorf("can't add the user, already exist a user with id: %s", user.Email)
 	}
-	UsersById[user.Email] = user
+	UsersById[user.Username] = user
 	return user, nil
 }
 
 // UpdateUser Update user with id UserID to new data in database
 // Returns a bool that reflect if user was updated correctly.
-func (r *RepoUser) UpdateUser(userID string, userUpd dto.UserUpdateRequest) (dto.User, error) {
+func (r *RepoUser) UpdateUser(userID string, user dto.User) (dto.User, error) {
 	if !r.ExistUser(userID) {
 		return dto.User{}, fmt.Errorf("can't update the user, no user found with id: %s", userID)
 	}
-	user := mapper.MapUserUpd2User(userID, userUpd)
-	UsersById[userID] = user
+	r.RemoveUser(userID)
+	r.AddUser(user)
 	return user, nil
 }
 
@@ -101,12 +100,11 @@ func (r *RepoUser) tryGetUser(userID string) (dto.User, bool) {
 	return user, exists
 }
 
-func fakeUsers() {
+func FakeUsers() {
 	if len(UsersById) != 0 {
 		return
 	}
 	p1, _ := lib.Checksum("SHA256", []byte("password1"))
-	p2, _ := lib.Checksum("SHA256", []byte("password2"))
 
 	users := []dto.User{
 		{
@@ -118,7 +116,7 @@ func fakeUsers() {
 		},
 		{
 			Username:   "tom.carter@meinermail.com",
-			Passphrase: p2,
+			Passphrase: p1,
 			FirstName:  "Tom",
 			LastName:   "Carter",
 			Email:      "tom.carter@meinermail.com",

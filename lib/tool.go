@@ -2,8 +2,11 @@ package lib
 
 import (
 	"dapp/schema"
+	"dapp/schema/dto"
 	"encoding/json"
 	"fmt"
+	"github.com/kataras/iris/v12"
+	"github.com/kataras/iris/v12/middleware/jwt"
 
 	"os"
 	"reflect"
@@ -15,6 +18,14 @@ import (
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
 )
+
+// DepObtainUserDid this tries to get the user DID store in the previously generated auth Bearer token.
+func DepObtainUserDid(ctx iris.Context) dto.InjectedParam {
+	tkData := jwt.Get(ctx).(*dto.AccessTokenData)
+
+	// returning the DID and Identifier (Username)
+	return tkData.Claims
+}
 
 func Contains(arr []string, elem string) bool {
 	for _, e := range arr {
