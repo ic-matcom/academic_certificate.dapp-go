@@ -3,7 +3,6 @@ package repo
 import (
 	"dapp/lib"
 	"dapp/schema/dto"
-	"dapp/schema/mapper"
 	"dapp/service/utils"
 	"fmt"
 	"sync"
@@ -61,21 +60,21 @@ func (r *RepoUser) ExistUser(userID string) bool {
 // AddUser Add the user to database
 // Returns nil if user was added correctly, otherwise return error found
 func (r *RepoUser) AddUser(user dto.User) (dto.User, error) {
-	if r.ExistUser(user.Email) {
+	if r.ExistUser(user.Username) {
 		return dto.User{}, fmt.Errorf("can't add the user, already exist a user with id: %s", user.Email)
 	}
-	UsersById[user.Email] = user
+	UsersById[user.Username] = user
 	return user, nil
 }
 
 // UpdateUser Update user with id UserID to new data in database
 // Returns a bool that reflect if user was updated correctly.
-func (r *RepoUser) UpdateUser(userID string, userUpd dto.UserUpdateRequest) (dto.User, error) {
+func (r *RepoUser) UpdateUser(userID string, user dto.User) (dto.User, error) {
 	if !r.ExistUser(userID) {
 		return dto.User{}, fmt.Errorf("can't update the user, no user found with id: %s", userID)
 	}
-	user := mapper.MapUserUpd2User(userID, userUpd)
-	UsersById[userID] = user
+	r.RemoveUser(userID)
+	r.AddUser(user)
 	return user, nil
 }
 

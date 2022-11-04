@@ -18,7 +18,7 @@ type ISvcUser interface {
 
 	GetUserSvc(userID string) (dto.UserResponse, *dto.Problem)
 	GetUsersSvc() (*[]dto.UserResponse, *dto.Problem)
-	PutUserSvc(userID string, request dto.UserUpdateRequest) (dto.UserResponse, *dto.Problem)
+	PutUserSvc(userID string, user dto.User) (dto.UserResponse, *dto.Problem)
 	PostUserSvc(user dto.User) (dto.UserResponse, *dto.Problem)
 	DeleteUserSvc(userID string) (dto.UserResponse, *dto.Problem)
 }
@@ -56,8 +56,10 @@ func (s *svcUser) GetUsersSvc() (*[]dto.UserResponse, *dto.Problem) {
 	return &usersResponse, nil
 }
 
-func (s *svcUser) PutUserSvc(userID string, request dto.UserUpdateRequest) (dto.UserResponse, *dto.Problem) {
-	res, err := s.repoUser.UpdateUser(userID, request)
+func (s *svcUser) PutUserSvc(userID string, user dto.User) (dto.UserResponse, *dto.Problem) {
+	passphraseEncoded, _ := lib.Checksum("SHA256", []byte(user.Passphrase))
+	user.Passphrase = passphraseEncoded
+	res, err := s.repoUser.UpdateUser(userID, user)
 	if err != nil {
 		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}

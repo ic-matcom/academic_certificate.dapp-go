@@ -230,7 +230,7 @@ func (h HAuth) getUserById(ctx iris.Context, service service.ISvcUser) {
 // @Produce  json
 // @Param Authorization header string  true "Insert access token" default(Bearer <Add access token here>)
 // @Param   id          path   string  true "The unique identifier for the user within the account"     Format(string)
-// @Param 	Transaction	body   dto.UserUpdateRequest	true	"User Data"
+// @Param 	Transaction	body   dto.User	true	"User Data"
 // @Success 200 {object} dto.UserResponse "OK"
 // @Failure 400 {object} dto.Problem "err.processing_param"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
@@ -245,7 +245,7 @@ func (h HAuth) putUserById(ctx iris.Context, service service.ISvcUser) {
 	}
 
 	// getting data from client
-	var requestData dto.UserUpdateRequest
+	var requestData dto.User
 
 	// unmarshalling the json and check
 	if err := ctx.ReadJSON(&requestData); err != nil {
