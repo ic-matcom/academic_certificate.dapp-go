@@ -3,9 +3,14 @@ package repo
 import (
 	"dapp/lib"
 	"dapp/schema/dto"
+	"dapp/schema/models"
 	"dapp/service/utils"
 	"fmt"
+	"log"
 	"sync"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 // region ======== SETUP =================================================================
@@ -27,14 +32,18 @@ func NewRepoUser(svcConf *utils.SvcConfig) *RepoUser {
 
 		// TODO: "FakeUsers" is only for demo purpose. Save users in In-memory.
 		FakeUsers()
+		InitDB()
+		PopulateDB()
 	})
 	return singletonRU
 }
 
 // In-memory storage
 // replace later with some db
-
 var UsersById map[string]dto.User
+
+// DB to treat users persistence
+var UsersDB *gorm.DB
 
 // GetUser get the user from the DB
 func (r *RepoUser) GetUser(userID string) (dto.User, error) {
@@ -126,6 +135,63 @@ func FakeUsers() {
 	UsersById = make(map[string]dto.User)
 	for _, user := range users {
 		UsersById[user.Email] = user
+	}
+}
+
+func InitDB() {
+	dbURL := "postgres://pg:pass@localhost:5432/users"
+	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	db.AutoMigrate(&models.User{})
+	UsersDB = db
+}
+
+func PopulateDB() {
+	var usersInDB []models.User
+	if result := UsersDB.Find(&usersInDB); result.Error != nil {
+		fmt.Println(result.Error)
+	}
+	if len(usersInDB) != 0 {
+		return
+	}
+
+	p1, _ := lib.Checksum("SHA256", []byte("password1"))
+	users := []models.User{
+		{
+			Username:   "richard",
+			Passphrase: p1,
+			FirstName:  "Richard",
+			LastName:   "Sargon",
+			Email:      "richard.sargon@meinermail.com",
+		},
+		{
+			Username:   "tom",
+			Passphrase: p1,
+			FirstName:  "Tom",
+			LastName:   "Carter",
+			Email:      "tom.carter@meinermail.com",
+		},
+		{
+			Username:   "ALab",
+			Passphrase: p1,
+			FirstName:  "Alejandro",
+			LastName:   "Labourdette",
+			Email:      "alab@gmail.com",
+		},
+		{
+			Username:   "Ariel",
+			Passphrase: p1,
+			FirstName:  "Ariel",
+			LastName:   "Huerta",
+			Email:      "ariel@gmail.com",
+		},
+	}
+	for _, user := range users {
+		if result := UsersDB.Create(user); result.Error != nil {
+			fmt.Println(result.Error)
+		}
 	}
 }
 
