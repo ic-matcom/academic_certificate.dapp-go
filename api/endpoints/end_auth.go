@@ -9,7 +9,6 @@ import (
 	"dapp/service"
 	"dapp/service/auth"
 	"dapp/service/utils"
-	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kataras/iris/v12"
@@ -141,7 +140,6 @@ func (h HAuth) authIntent(ctx iris.Context, uCred *dto.UserCredIn, svcAuth *auth
 // @Security ApiKeyAuth
 // @Produce  json
 // @Param Authorization header string true "Insert access token" default(Bearer <Add access token here>)
-
 // @Success 204 "Everything went fine, nothing to return"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
@@ -169,12 +167,7 @@ func (h HAuth) logout(ctx iris.Context) {
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /auth/profile [get]
 func (h HAuth) getUserProfile(ctx iris.Context, params dto.InjectedParam, service service.ISvcUser) {
-	userID, err := strconv.Atoi(params.ID)
-	if err != nil {
-		(*h.response).ResErr(&dto.Problem{Status: 500, Title: "error", Detail: err.Error()}, &ctx)
-		return
-	}
-	user, problem := service.GetUserSvc(userID)
+	user, problem := service.GetUserByUsernameSvc(params.Username)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
@@ -234,9 +227,9 @@ func (h HAuth) getUserById(ctx iris.Context, service service.ISvcUser) {
 // @Tags Users
 // @Security ApiKeyAuth
 // @Produce  json
-// @Param Authorization header string  true "Insert access token" default(Bearer <Add access token here>)
-// @Param   id          path   int     true "The unique identifier for the user within the account"     Format(int)
-// @Param 	Transaction	body   dto.UserUpdate	true	"User Data"
+// @Param Authorization header string       true "Insert access token" default(Bearer <Add access token here>)
+// @Param   id          path   int     	    true "The unique identifier for the user within the account"     Format(int)
+// @Param 	Transaction	body   dto.UserData	true	"User Data"
 // @Success 200 {object} dto.UserResponse "OK"
 // @Failure 400 {object} dto.Problem "err.processing_param"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
@@ -251,7 +244,7 @@ func (h HAuth) putUserById(ctx iris.Context, service service.ISvcUser) {
 	}
 
 	// getting data from client
-	var requestData dto.UserUpdate
+	var requestData dto.UserData
 
 	// unmarshalling the json and check
 	if err := ctx.ReadJSON(&requestData); err != nil {
@@ -271,8 +264,8 @@ func (h HAuth) putUserById(ctx iris.Context, service service.ISvcUser) {
 // @Tags Users
 // @Security ApiKeyAuth
 // @Produce  json
-// @Param Authorization header string    true  "Insert access token" default(Bearer <Add access token here>)
-// @Param 	Transaction	body   dto.User	 true  "User Data"
+// @Param Authorization header string    		 true  "Insert access token" default(Bearer <Add access token here>)
+// @Param 	Transaction	body   dto.UserData  	 true  "User Data"
 // @Success 204 "Everything went fine, nothing to return."
 // @Failure 400 {object} dto.Problem "err.processing_param"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
@@ -280,7 +273,7 @@ func (h HAuth) putUserById(ctx iris.Context, service service.ISvcUser) {
 // @Router /users [post]
 func (h HAuth) postUser(ctx iris.Context, service service.ISvcUser) {
 	// getting data from client
-	var requestData dto.User
+	var requestData dto.UserData
 
 	// unmarshalling the json and check
 	if err := ctx.ReadJSON(&requestData); err != nil {

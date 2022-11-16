@@ -22,7 +22,7 @@ type ProviderDrone struct {
 
 func (p *ProviderDrone) GrantIntent(uCred *dto.UserCredIn, options interface{}) (*dto.GrantIntentResponse, *dto.Problem) {
 	// getting the users
-	user, err := (*p.repo).GetUserByUserName(uCred.Username)
+	user, err := (*p.repo).GetUserByUsername(uCred.Username)
 	if err != nil {
 		return nil, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}

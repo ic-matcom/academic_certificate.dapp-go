@@ -48,7 +48,8 @@ func (r *RepoUser) GetUser(userID int) (dto.User, error) {
 	return mapper.MapModelUser2DtoUser(modelUser), nil
 }
 
-func (r *RepoUser) GetUserByUserName(username string) (dto.User, error) {
+// GetUser get the user from the DB
+func (r *RepoUser) GetUserByUsername(username string) (dto.User, error) {
 	var modelUser models.User
 	if result := UsersDB.First(&modelUser, models.User{Username: username}); result.Error != nil {
 		return dto.User{}, result.Error
@@ -71,16 +72,16 @@ func (r *RepoUser) GetUsers() ([]dto.User, error) {
 
 // AddUser Add the user to database
 // Returns nil if user was added correctly, otherwise return error found
-func (r *RepoUser) AddUser(user dto.User) (dto.User, error) {
-	modelUser := mapper.MapDtoUser2ModelUser(user)
+func (r *RepoUser) AddUser(user dto.UserData) (dto.User, error) {
+	modelUser := mapper.MapUserData2ModelUser(0, user)
 	result := UsersDB.Create(&modelUser)
 	return mapper.MapModelUser2DtoUser(modelUser), result.Error
 }
 
 // UpdateUser Update user with id UserID to new data in database
 // Returns nil if user was updated correctly, otherwise return error found
-func (r *RepoUser) UpdateUser(userID int, user dto.UserUpdate) (dto.User, error) {
-	modelUser := mapper.MapUserUpd2ModelUser(userID, user)
+func (r *RepoUser) UpdateUser(userID int, user dto.UserData) (dto.User, error) {
+	modelUser := mapper.MapUserData2ModelUser(userID, user)
 	var userInDB models.User
 	if result := UsersDB.First(&userInDB, userID); result.Error != nil {
 		return dto.User{}, result.Error
@@ -136,18 +137,18 @@ func PopulateDB() {
 			Email:      "tom.carter@meinermail.com",
 		},
 		{
-			Username:   "ALab",
-			Passphrase: p1,
-			FirstName:  "Alejandro",
-			LastName:   "Labourdette",
-			Email:      "alab@gmail.com",
-		},
-		{
 			Username:   "Ariel",
 			Passphrase: p1,
 			FirstName:  "Ariel",
 			LastName:   "Huerta",
 			Email:      "ariel@gmail.com",
+		},
+		{
+			Username:   "ALab",
+			Passphrase: p1,
+			FirstName:  "Alejandro",
+			LastName:   "Labourdette",
+			Email:      "alab@gmail.com",
 		},
 	}
 	for _, user := range users {

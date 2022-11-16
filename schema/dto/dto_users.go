@@ -18,7 +18,7 @@ type UserResponse struct {
 	Email     string `json:"email" validate:"required,email"`
 }
 
-type UserUpdate struct {
+type UserData struct {
 	Username   string `json:"username" validate:"required"`
 	Passphrase string `json:"passphrase" validate:"required"`
 	FirstName  string `json:"firstname" validate:"required"`

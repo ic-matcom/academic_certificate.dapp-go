@@ -17,9 +17,10 @@ type ISvcUser interface {
 	// user functions
 
 	GetUserSvc(userID int) (dto.UserResponse, *dto.Problem)
+	GetUserByUsernameSvc(username string) (dto.UserResponse, *dto.Problem)
 	GetUsersSvc() (*[]dto.UserResponse, *dto.Problem)
-	PutUserSvc(userID int, user dto.UserUpdate) (dto.UserResponse, *dto.Problem)
-	PostUserSvc(user dto.User) (dto.UserResponse, *dto.Problem)
+	PutUserSvc(userID int, user dto.UserData) (dto.UserResponse, *dto.Problem)
+	PostUserSvc(user dto.UserData) (dto.UserResponse, *dto.Problem)
 	DeleteUserSvc(userID int) (dto.UserResponse, *dto.Problem)
 }
 
@@ -44,6 +45,14 @@ func (s *svcUser) GetUserSvc(userID int) (dto.UserResponse, *dto.Problem) {
 	return mapper.MapDtoUser2DtoUserResponse(res), nil
 }
 
+func (s *svcUser) GetUserByUsernameSvc(username string) (dto.UserResponse, *dto.Problem) {
+	res, err := (*s.repoUser).GetUserByUsername(username)
+	if err != nil {
+		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
+	}
+	return mapper.MapDtoUser2DtoUserResponse(res), nil
+}
+
 func (s *svcUser) GetUsersSvc() (*[]dto.UserResponse, *dto.Problem) {
 	res, err := (*s.repoUser).GetUsers()
 	if err != nil {
@@ -56,7 +65,7 @@ func (s *svcUser) GetUsersSvc() (*[]dto.UserResponse, *dto.Problem) {
 	return &usersResponse, nil
 }
 
-func (s *svcUser) PutUserSvc(userID int, user dto.UserUpdate) (dto.UserResponse, *dto.Problem) {
+func (s *svcUser) PutUserSvc(userID int, user dto.UserData) (dto.UserResponse, *dto.Problem) {
 	passphraseEncoded, _ := lib.Checksum("SHA256", []byte(user.Passphrase))
 	user.Passphrase = passphraseEncoded
 	dtoUser, err := s.repoUser.UpdateUser(userID, user)
@@ -66,14 +75,14 @@ func (s *svcUser) PutUserSvc(userID int, user dto.UserUpdate) (dto.UserResponse,
 	return mapper.MapDtoUser2DtoUserResponse(dtoUser), nil
 }
 
-func (s *svcUser) PostUserSvc(user dto.User) (dto.UserResponse, *dto.Problem) {
+func (s *svcUser) PostUserSvc(user dto.UserData) (dto.UserResponse, *dto.Problem) {
 	passphraseEncoded, _ := lib.Checksum("SHA256", []byte(user.Passphrase))
 	user.Passphrase = passphraseEncoded
-	_, err := s.repoUser.AddUser(user)
+	dtoUser, err := s.repoUser.AddUser(user)
 	if err != nil {
 		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
-	return mapper.MapDtoUser2DtoUserResponse(user), nil
+	return mapper.MapDtoUser2DtoUserResponse(dtoUser), nil
 }
 
 func (s *svcUser) DeleteUserSvc(userID int) (dto.UserResponse, *dto.Problem) {

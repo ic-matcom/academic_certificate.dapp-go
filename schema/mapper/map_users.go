@@ -37,7 +37,7 @@ func MapDtoUser2ModelUser(user dto.User) models.User {
 	}
 }
 
-func MapUserUpd2ModelUser(userID int, user dto.UserUpdate) models.User {
+func MapUserData2ModelUser(userID int, user dto.UserData) models.User {
 	return models.User{
 		ID:         userID,
 		Username:   user.Username,
@@ -48,7 +48,7 @@ func MapUserUpd2ModelUser(userID int, user dto.UserUpdate) models.User {
 	}
 }
 
-func MapUserUpd2UserResponse(userID int, user dto.UserUpdate) dto.UserResponse {
+func MapUserData2UserResponse(userID int, user dto.UserData) dto.UserResponse {
 	return dto.UserResponse{
 		ID:        userID,
 		Username:  user.Username,
