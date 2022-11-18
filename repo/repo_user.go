@@ -2,8 +2,6 @@ package repo
 
 import (
 	"dapp/lib"
-	"dapp/schema/dto"
-	"dapp/schema/mapper"
 	"dapp/schema/models"
 	"dapp/service/utils"
 	"fmt"
@@ -40,65 +38,59 @@ func NewRepoUser(svcConf *utils.SvcConfig) *RepoUser {
 var UsersDB *gorm.DB
 
 // GetUser get the user from the DB
-func (r *RepoUser) GetUser(userID int) (dto.User, error) {
+func (r *RepoUser) GetUser(userID int) (models.User, error) {
 	var modelUser models.User
 	if result := UsersDB.First(&modelUser, userID); result.Error != nil {
-		return dto.User{}, result.Error
+		return models.User{}, result.Error
 	}
-	return mapper.MapModelUser2DtoUser(modelUser), nil
+	return modelUser, nil
 }
 
 // GetUser get the user from the DB
-func (r *RepoUser) GetUserByUsername(username string) (dto.User, error) {
+func (r *RepoUser) GetUserByUsername(username string) (models.User, error) {
 	var modelUser models.User
 	if result := UsersDB.First(&modelUser, models.User{Username: username}); result.Error != nil {
-		return dto.User{}, result.Error
+		return models.User{}, result.Error
 	}
-	return mapper.MapModelUser2DtoUser(modelUser), nil
+	return modelUser, nil
 }
 
 // GetUsers return a list of dto.User
-func (r *RepoUser) GetUsers() ([]dto.User, error) {
+func (r *RepoUser) GetUsers() ([]models.User, error) {
 	var users []models.User
 	if result := UsersDB.Find(&users); result.Error != nil {
-		return []dto.User{}, result.Error
+		return []models.User{}, result.Error
 	}
-	dtoUsers := []dto.User{}
-	for _, u := range users {
-		dtoUsers = append(dtoUsers, mapper.MapModelUser2DtoUser(u))
-	}
-	return dtoUsers, nil
+	return users, nil
 }
 
 // AddUser Add the user to database
 // Returns nil if user was added correctly, otherwise return error found
-func (r *RepoUser) AddUser(user dto.UserData) (dto.User, error) {
-	modelUser := mapper.MapUserData2ModelUser(0, user)
-	result := UsersDB.Create(&modelUser)
-	return mapper.MapModelUser2DtoUser(modelUser), result.Error
+func (r *RepoUser) AddUser(user models.User) (models.User, error) {
+	result := UsersDB.Create(&user)
+	return user, result.Error
 }
 
 // UpdateUser Update user with id UserID to new data in database
 // Returns nil if user was updated correctly, otherwise return error found
-func (r *RepoUser) UpdateUser(userID int, user dto.UserData) (dto.User, error) {
-	modelUser := mapper.MapUserData2ModelUser(userID, user)
+func (r *RepoUser) UpdateUser(userID int, user models.User) (models.User, error) {
 	var userInDB models.User
 	if result := UsersDB.First(&userInDB, userID); result.Error != nil {
-		return dto.User{}, result.Error
+		return models.User{}, result.Error
 	}
-	result := UsersDB.Save(&modelUser)
-	return mapper.MapModelUser2DtoUser(modelUser), result.Error
+	result := UsersDB.Save(&user)
+	return user, result.Error
 }
 
 // RemoveUser Remove user from database
 // Returns nil if user was removed correctly, otherwise return error found
-func (r *RepoUser) RemoveUser(userID int) (dto.User, error) {
+func (r *RepoUser) RemoveUser(userID int) (models.User, error) {
 	var modelUser models.User
 	if result := UsersDB.First(&modelUser, userID); result.Error != nil {
-		return dto.User{}, result.Error
+		return models.User{}, result.Error
 	}
 	result := UsersDB.Delete(&modelUser)
-	return mapper.MapModelUser2DtoUser(modelUser), result.Error
+	return modelUser, result.Error
 }
 
 func InitDB() {

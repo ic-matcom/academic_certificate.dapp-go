@@ -1,0 +1,9 @@
+#!/bin/bash 
+echo "### GENERATING SWAG FILES..."
+swag init --md docs/md_endpoints
+echo "### BUILDING PROJECT..."
+go build -o dapp
+echo "### SETTING ENVIROMENT VARIABLES..."
+source ./setenv.sh
+echo "### RUNNING PROJECT..."
+./dapp

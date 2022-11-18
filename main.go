@@ -36,13 +36,14 @@ func newApp() (*iris.Application, *utils.SvcConfig) {
 	crs := func(ctx iris.Context) {
 		ctx.Header("Access-Control-Allow-Origin", "*")
 		ctx.Header("Access-Control-Allow-Credentials", "true")
+		ctx.Header("Access-Control-Allow-Methods", "POST, PUT, PATCH, DELETE")
 
 		if ctx.Method() == iris.MethodOptions {
 			ctx.Header("Access-Control-Methods",
 				"POST, PUT, PATCH, DELETE")
 
 			ctx.Header("Access-Control-Allow-Headers",
-				"Access-Control-Allow-Origin,Content-Type,authorization")
+				"Access-Control-Allow-Methods,Access-Control-Allow-Origin,Content-Type,authorization")
 
 			ctx.Header("Access-Control-Max-Age",
 				"86400")
