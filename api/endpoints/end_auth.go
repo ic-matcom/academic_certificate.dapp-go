@@ -140,7 +140,6 @@ func (h HAuth) authIntent(ctx iris.Context, uCred *dto.UserCredIn, svcAuth *auth
 // @Security ApiKeyAuth
 // @Produce  json
 // @Param Authorization header string true "Insert access token" default(Bearer <Add access token here>)
-
 // @Success 204 "Everything went fine, nothing to return"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
@@ -168,7 +167,7 @@ func (h HAuth) logout(ctx iris.Context) {
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /auth/profile [get]
 func (h HAuth) getUserProfile(ctx iris.Context, params dto.InjectedParam, service service.ISvcUser) {
-	user, problem := service.GetUserSvc(params.ID)
+	user, problem := service.GetUserByUsernameSvc(params.Username)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
@@ -202,7 +201,7 @@ func (h HAuth) getUsers(ctx iris.Context, service service.ISvcUser) {
 // @Security ApiKeyAuth
 // @Produce  json
 // @Param Authorization header string  true "Insert access token" default(Bearer <Add access token here>)
-// @Param   id          path   string  true "The unique identifier for the user within the account"     Format(string)
+// @Param   id          path   int     true "The unique identifier for the user within the account"     Format(int)
 // @Success 200 {object} dto.UserResponse "OK"
 // @Failure 400 {object} dto.Problem "err.processing_param"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
@@ -210,8 +209,8 @@ func (h HAuth) getUsers(ctx iris.Context, service service.ISvcUser) {
 // @Router /users/{id} [get]
 func (h HAuth) getUserById(ctx iris.Context, service service.ISvcUser) {
 	// checking param
-	userID := ctx.Params().GetString("id")
-	if userID == "" {
+	userID := ctx.Params().GetIntDefault("id", -1)
+	if userID == -1 {
 		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
 		return
 	}
@@ -228,9 +227,9 @@ func (h HAuth) getUserById(ctx iris.Context, service service.ISvcUser) {
 // @Tags Users
 // @Security ApiKeyAuth
 // @Produce  json
-// @Param Authorization header string  true "Insert access token" default(Bearer <Add access token here>)
-// @Param   id          path   string  true "The unique identifier for the user within the account"     Format(string)
-// @Param 	Transaction	body   dto.User	true	"User Data"
+// @Param Authorization header string       true "Insert access token" default(Bearer <Add access token here>)
+// @Param   id          path   int     	    true "The unique identifier for the user within the account"     Format(int)
+// @Param 	Transaction	body   dto.UserData	true	"User Data"
 // @Success 200 {object} dto.UserResponse "OK"
 // @Failure 400 {object} dto.Problem "err.processing_param"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
@@ -238,14 +237,14 @@ func (h HAuth) getUserById(ctx iris.Context, service service.ISvcUser) {
 // @Router /users/{id} [put]
 func (h HAuth) putUserById(ctx iris.Context, service service.ISvcUser) {
 	// checking param
-	userID := ctx.Params().GetString("id")
-	if userID == "" {
+	userID := ctx.Params().GetIntDefault("id", -1)
+	if userID == -1 {
 		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
 		return
 	}
 
 	// getting data from client
-	var requestData dto.User
+	var requestData dto.UserData
 
 	// unmarshalling the json and check
 	if err := ctx.ReadJSON(&requestData); err != nil {
@@ -265,8 +264,8 @@ func (h HAuth) putUserById(ctx iris.Context, service service.ISvcUser) {
 // @Tags Users
 // @Security ApiKeyAuth
 // @Produce  json
-// @Param Authorization header string    true  "Insert access token" default(Bearer <Add access token here>)
-// @Param 	Transaction	body   dto.User	 true  "User Data"
+// @Param Authorization header string    		 true  "Insert access token" default(Bearer <Add access token here>)
+// @Param 	Transaction	body   dto.UserData  	 true  "User Data"
 // @Success 204 "Everything went fine, nothing to return."
 // @Failure 400 {object} dto.Problem "err.processing_param"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
@@ -274,7 +273,7 @@ func (h HAuth) putUserById(ctx iris.Context, service service.ISvcUser) {
 // @Router /users [post]
 func (h HAuth) postUser(ctx iris.Context, service service.ISvcUser) {
 	// getting data from client
-	var requestData dto.User
+	var requestData dto.UserData
 
 	// unmarshalling the json and check
 	if err := ctx.ReadJSON(&requestData); err != nil {
@@ -295,16 +294,16 @@ func (h HAuth) postUser(ctx iris.Context, service service.ISvcUser) {
 // @Security ApiKeyAuth
 // @Produce  json
 // @Param Authorization header string    true  "Insert access token" default(Bearer <Add access token here>)
-// @Param   id          path   string    true  "The unique identifier for the user within the account"     Format(string)
+// @Param   id          path   int       true  "The unique identifier for the user within the account"     Format(int)
 // @Success 204 "OK"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /users/{id} [delete]
 func (h HAuth) deleteUserById(ctx iris.Context, service service.ISvcUser) {
 	// checking param
-	userID := ctx.Params().GetString("id")
-	if userID == "" {
-		h.response.ResErr(&dto.Problem{Status: iris.StatusInternalServerError, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
+	userID := ctx.Params().GetIntDefault("id", -1)
+	if userID == -1 {
+		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
 		return
 	}
 

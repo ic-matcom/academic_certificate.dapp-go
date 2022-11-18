@@ -3,7 +3,7 @@ package dto
 // UserCredIn Is a example declaring the validation for tech struct. It will be used when the
 // struct is in the endpoint parameters
 type UserCredIn struct {
-	Username string `example:"richard.sargon@meinermail.com" validate:"required,ascii,gte=3,lte=60"`
+	Username string `example:"richard" validate:"required,ascii,gte=3,lte=60"`
 	Password string `example:"password1" validate:"required,ascii,gte=3,lte=20"`
 }
 
@@ -24,6 +24,6 @@ type Claims struct {
 }
 
 type InjectedParam struct {
-	ID      string
+	ID       string
 	Username string
 }
