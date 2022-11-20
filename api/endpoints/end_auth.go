@@ -9,6 +9,7 @@ import (
 	"dapp/service"
 	"dapp/service/auth"
 	"dapp/service/utils"
+	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kataras/iris/v12"
@@ -180,13 +181,22 @@ func (h HAuth) getUserProfile(ctx iris.Context, params dto.InjectedParam, servic
 // @Tags Users
 // @Security ApiKeyAuth
 // @Produce  json
-// @Param Authorization header string  true "Insert access token" default(Bearer <Add access token here>)
+// @Param Authorization header string   true   "Insert access token"   default(Bearer <Add access token here>)
+// @Param limit         query  int      false  "Items limit per page"
+// @Param page          query  int      false  "Page displayed"
+// @Param sort          query  string   false  "Sort items by"
 // @Success 200 {object} []dto.UserResponse "OK"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /users [get]
 func (h HAuth) getUsers(ctx iris.Context, service service.ISvcUser) {
-	users, problem := service.GetUsersSvc()
+	pagination := dto.Pagination{
+		Limit: ctx.URLParamIntDefault("limit", 0),
+		Page:  ctx.URLParamIntDefault("page", 0),
+		Sort:  ctx.URLParamDefault("sort", ""),
+	}
+	fmt.Printf("page %d, Limit %d", pagination.Page, pagination.Limit)
+	users, problem := service.GetUsersSvc(&pagination)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return

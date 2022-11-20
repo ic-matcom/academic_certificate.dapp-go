@@ -6,6 +6,7 @@ import (
 	"dapp/schema"
 	"dapp/schema/dto"
 	"dapp/schema/mapper"
+	"dapp/schema/models"
 
 	"github.com/kataras/iris/v12"
 )
@@ -18,7 +19,7 @@ type ISvcUser interface {
 
 	GetUserSvc(userID int) (dto.UserResponse, *dto.Problem)
 	GetUserByUsernameSvc(username string) (dto.UserResponse, *dto.Problem)
-	GetUsersSvc() (*[]dto.UserResponse, *dto.Problem)
+	GetUsersSvc(pagination *dto.Pagination) (*dto.Pagination, *dto.Problem)
 	PutUserSvc(userID int, user dto.UserData) (dto.UserResponse, *dto.Problem)
 	PostUserSvc(user dto.UserData) (dto.UserResponse, *dto.Problem)
 	DeleteUserSvc(userID int) (dto.UserResponse, *dto.Problem)
@@ -53,16 +54,18 @@ func (s *svcUser) GetUserByUsernameSvc(username string) (dto.UserResponse, *dto.
 	return mapper.MapModelUser2DtoUserResponse(res), nil
 }
 
-func (s *svcUser) GetUsersSvc() (*[]dto.UserResponse, *dto.Problem) {
-	res, err := (*s.repoUser).GetUsers()
+func (s *svcUser) GetUsersSvc(pagination *dto.Pagination) (*dto.Pagination, *dto.Problem) {
+	res, err := (*s.repoUser).GetUsers(pagination)
 	if err != nil {
 		return nil, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
 	var usersResponse []dto.UserResponse
-	for i := 0; i < len(res); i++ {
-		usersResponse = append(usersResponse, mapper.MapModelUser2DtoUserResponse(res[i]))
+	items := res.Rows.([]models.User)
+	for i := 0; i < len(items); i++ {
+		usersResponse = append(usersResponse, mapper.MapModelUser2DtoUserResponse(items[i]))
 	}
-	return &usersResponse, nil
+	res.Rows = usersResponse
+	return res, nil
 }
 
 func (s *svcUser) PutUserSvc(userID int, user dto.UserData) (dto.UserResponse, *dto.Problem) {
