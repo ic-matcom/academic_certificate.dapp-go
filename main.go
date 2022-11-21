@@ -88,8 +88,8 @@ func newApp() (*iris.Application, *utils.SvcConfig) {
 // @version 0.1
 // @description REST API to communicate with Hyperledger Fabric Blockchain Network
 
-// @contact.name Daniel Mena, Kmilo Denis Glez
-// @contact.url https://github.com/dani-fmena and https://github.com/kmilodenisglez
+// @contact.name José Alejandro Labourdette Lartigue Soto, Kmilo Denis Glez
+// @contact.url https://github.com/AlejandroLabourdette and https://github.com/kmilodenisglez
 // @contact.email kmilo.denis.glez@gmail.com
 
 // @authorizationurl https://example.com/oauth/authorize
