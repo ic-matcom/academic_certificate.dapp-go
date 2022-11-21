@@ -5,6 +5,16 @@ import (
 	"dapp/schema/models"
 )
 
+func MapModelUser2DtoUserResponse(user models.User) dto.UserResponse {
+	return dto.UserResponse{
+		ID:        user.ID,
+		Username:  user.Username,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Email:     user.Email,
+	}
+}
+
 func MapDtoUser2DtoUserResponse(user dto.User) dto.UserResponse {
 	return dto.UserResponse{
 		ID:        user.ID,

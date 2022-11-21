@@ -6,6 +6,7 @@ import (
 	"dapp/schema"
 	"dapp/schema/dto"
 	"dapp/schema/mapper"
+	"dapp/schema/models"
 
 	"github.com/kataras/iris/v12"
 )
@@ -18,7 +19,7 @@ type ISvcUser interface {
 
 	GetUserSvc(userID int) (dto.UserResponse, *dto.Problem)
 	GetUserByUsernameSvc(username string) (dto.UserResponse, *dto.Problem)
-	GetUsersSvc() (*[]dto.UserResponse, *dto.Problem)
+	GetUsersSvc(pagination *dto.Pagination) (*dto.Pagination, *dto.Problem)
 	PutUserSvc(userID int, user dto.UserData) (dto.UserResponse, *dto.Problem)
 	PostUserSvc(user dto.UserData) (dto.UserResponse, *dto.Problem)
 	DeleteUserSvc(userID int) (dto.UserResponse, *dto.Problem)
@@ -42,7 +43,7 @@ func (s *svcUser) GetUserSvc(userID int) (dto.UserResponse, *dto.Problem) {
 	if err != nil {
 		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
-	return mapper.MapDtoUser2DtoUserResponse(res), nil
+	return mapper.MapModelUser2DtoUserResponse(res), nil
 }
 
 func (s *svcUser) GetUserByUsernameSvc(username string) (dto.UserResponse, *dto.Problem) {
@@ -50,39 +51,43 @@ func (s *svcUser) GetUserByUsernameSvc(username string) (dto.UserResponse, *dto.
 	if err != nil {
 		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
-	return mapper.MapDtoUser2DtoUserResponse(res), nil
+	return mapper.MapModelUser2DtoUserResponse(res), nil
 }
 
-func (s *svcUser) GetUsersSvc() (*[]dto.UserResponse, *dto.Problem) {
-	res, err := (*s.repoUser).GetUsers()
+func (s *svcUser) GetUsersSvc(pagination *dto.Pagination) (*dto.Pagination, *dto.Problem) {
+	res, err := (*s.repoUser).GetUsers(pagination)
 	if err != nil {
 		return nil, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
 	var usersResponse []dto.UserResponse
-	for i := 0; i < len(res); i++ {
-		usersResponse = append(usersResponse, mapper.MapDtoUser2DtoUserResponse(res[i]))
+	items := res.Rows.([]models.User)
+	for i := 0; i < len(items); i++ {
+		usersResponse = append(usersResponse, mapper.MapModelUser2DtoUserResponse(items[i]))
 	}
-	return &usersResponse, nil
+	res.Rows = usersResponse
+	return res, nil
 }
 
 func (s *svcUser) PutUserSvc(userID int, user dto.UserData) (dto.UserResponse, *dto.Problem) {
 	passphraseEncoded, _ := lib.Checksum("SHA256", []byte(user.Passphrase))
 	user.Passphrase = passphraseEncoded
-	dtoUser, err := s.repoUser.UpdateUser(userID, user)
+	modelUser := mapper.MapUserData2ModelUser(userID, user)
+	resUser, err := s.repoUser.UpdateUser(userID, modelUser)
 	if err != nil {
 		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
-	return mapper.MapDtoUser2DtoUserResponse(dtoUser), nil
+	return mapper.MapModelUser2DtoUserResponse(resUser), nil
 }
 
 func (s *svcUser) PostUserSvc(user dto.UserData) (dto.UserResponse, *dto.Problem) {
 	passphraseEncoded, _ := lib.Checksum("SHA256", []byte(user.Passphrase))
 	user.Passphrase = passphraseEncoded
-	dtoUser, err := s.repoUser.AddUser(user)
+	modelUser := mapper.MapUserData2ModelUser(0, user)
+	resUser, err := s.repoUser.AddUser(modelUser)
 	if err != nil {
 		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
-	return mapper.MapDtoUser2DtoUserResponse(dtoUser), nil
+	return mapper.MapModelUser2DtoUserResponse(resUser), nil
 }
 
 func (s *svcUser) DeleteUserSvc(userID int) (dto.UserResponse, *dto.Problem) {
@@ -90,5 +95,5 @@ func (s *svcUser) DeleteUserSvc(userID int) (dto.UserResponse, *dto.Problem) {
 	if err != nil {
 		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
-	return mapper.MapDtoUser2DtoUserResponse(user), nil
+	return mapper.MapModelUser2DtoUserResponse(user), nil
 }

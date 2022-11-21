@@ -3,11 +3,11 @@ package repo
 import (
 	"dapp/lib"
 	"dapp/schema/dto"
-	"dapp/schema/mapper"
 	"dapp/schema/models"
 	"dapp/service/utils"
 	"fmt"
 	"log"
+	"math"
 	"sync"
 
 	"gorm.io/driver/postgres"
@@ -40,65 +40,61 @@ func NewRepoUser(svcConf *utils.SvcConfig) *RepoUser {
 var UsersDB *gorm.DB
 
 // GetUser get the user from the DB
-func (r *RepoUser) GetUser(userID int) (dto.User, error) {
+func (r *RepoUser) GetUser(userID int) (models.User, error) {
 	var modelUser models.User
 	if result := UsersDB.First(&modelUser, userID); result.Error != nil {
-		return dto.User{}, result.Error
+		return models.User{}, result.Error
 	}
-	return mapper.MapModelUser2DtoUser(modelUser), nil
+	return modelUser, nil
 }
 
 // GetUser get the user from the DB
-func (r *RepoUser) GetUserByUsername(username string) (dto.User, error) {
+func (r *RepoUser) GetUserByUsername(username string) (models.User, error) {
 	var modelUser models.User
 	if result := UsersDB.First(&modelUser, models.User{Username: username}); result.Error != nil {
-		return dto.User{}, result.Error
+		return models.User{}, result.Error
 	}
-	return mapper.MapModelUser2DtoUser(modelUser), nil
+	return modelUser, nil
 }
 
 // GetUsers return a list of dto.User
-func (r *RepoUser) GetUsers() ([]dto.User, error) {
+func (r *RepoUser) GetUsers(pagination *dto.Pagination) (*dto.Pagination, error) {
 	var users []models.User
-	if result := UsersDB.Find(&users); result.Error != nil {
-		return []dto.User{}, result.Error
+	result := UsersDB.Scopes(paginate(users, pagination, UsersDB)).Find(&users)
+	if result.Error != nil {
+		return &dto.Pagination{}, result.Error
 	}
-	dtoUsers := []dto.User{}
-	for _, u := range users {
-		dtoUsers = append(dtoUsers, mapper.MapModelUser2DtoUser(u))
-	}
-	return dtoUsers, nil
+	pagination.Rows = users
+	return pagination, nil
 }
 
 // AddUser Add the user to database
 // Returns nil if user was added correctly, otherwise return error found
-func (r *RepoUser) AddUser(user dto.UserData) (dto.User, error) {
-	modelUser := mapper.MapUserData2ModelUser(0, user)
-	result := UsersDB.Create(&modelUser)
-	return mapper.MapModelUser2DtoUser(modelUser), result.Error
+func (r *RepoUser) AddUser(user models.User) (models.User, error) {
+	result := UsersDB.Create(&user)
+	return user, result.Error
 }
 
 // UpdateUser Update user with id UserID to new data in database
 // Returns nil if user was updated correctly, otherwise return error found
-func (r *RepoUser) UpdateUser(userID int, user dto.UserData) (dto.User, error) {
-	modelUser := mapper.MapUserData2ModelUser(userID, user)
+func (r *RepoUser) UpdateUser(userID int, user models.User) (models.User, error) {
 	var userInDB models.User
 	if result := UsersDB.First(&userInDB, userID); result.Error != nil {
-		return dto.User{}, result.Error
+		return models.User{}, result.Error
 	}
-	result := UsersDB.Save(&modelUser)
-	return mapper.MapModelUser2DtoUser(modelUser), result.Error
+	result := UsersDB.Save(&user)
+	return user, result.Error
 }
 
 // RemoveUser Remove user from database
 // Returns nil if user was removed correctly, otherwise return error found
-func (r *RepoUser) RemoveUser(userID int) (dto.User, error) {
+func (r *RepoUser) RemoveUser(userID int) (models.User, error) {
 	var modelUser models.User
 	if result := UsersDB.First(&modelUser, userID); result.Error != nil {
-		return dto.User{}, result.Error
+		return models.User{}, result.Error
 	}
 	result := UsersDB.Delete(&modelUser)
-	return mapper.MapModelUser2DtoUser(modelUser), result.Error
+	return modelUser, result.Error
 }
 
 func InitDB() {
@@ -151,9 +147,30 @@ func PopulateDB() {
 			Email:      "alab@gmail.com",
 		},
 	}
+	for i := 0; i < 100; i++ {
+		users = append(users, models.User{
+			Username:   fmt.Sprintf("UserName%d", i),
+			Passphrase: p1,
+			FirstName:  fmt.Sprintf("Name%d", i),
+			LastName:   fmt.Sprintf("Last%d", i),
+			Email:      fmt.Sprintf("bot%d@gmail.com", i),
+		})
+	}
 	for _, user := range users {
 		if result := UsersDB.Create(&user); result.Error != nil {
 			fmt.Println(result.Error)
 		}
+	}
+}
+
+func paginate(value interface{}, pagination *dto.Pagination, db *gorm.DB) func(db *gorm.DB) *gorm.DB {
+	var totalRows int64
+	db.Model(value).Count(&totalRows)
+	pagination.TotalRows = totalRows
+	totalPages := int(math.Ceil(float64(totalRows) / float64(pagination.Limit)))
+	pagination.TotalPages = totalPages
+
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Offset(pagination.GetOffset()).Limit(pagination.GetLimit()).Order(pagination.GetSort())
 	}
 }
