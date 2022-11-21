@@ -2,10 +2,12 @@ package repo
 
 import (
 	"dapp/lib"
+	"dapp/schema/dto"
 	"dapp/schema/models"
 	"dapp/service/utils"
 	"fmt"
 	"log"
+	"math"
 	"sync"
 
 	"gorm.io/driver/postgres"
@@ -56,12 +58,14 @@ func (r *RepoUser) GetUserByUsername(username string) (models.User, error) {
 }
 
 // GetUsers return a list of dto.User
-func (r *RepoUser) GetUsers() ([]models.User, error) {
+func (r *RepoUser) GetUsers(pagination *dto.Pagination) (*dto.Pagination, error) {
 	var users []models.User
-	if result := UsersDB.Find(&users); result.Error != nil {
-		return []models.User{}, result.Error
+	result := UsersDB.Scopes(paginate(users, pagination, UsersDB)).Find(&users)
+	if result.Error != nil {
+		return &dto.Pagination{}, result.Error
 	}
-	return users, nil
+	pagination.Rows = users
+	return pagination, nil
 }
 
 // AddUser Add the user to database
@@ -143,9 +147,30 @@ func PopulateDB() {
 			Email:      "alab@gmail.com",
 		},
 	}
+	for i := 0; i < 100; i++ {
+		users = append(users, models.User{
+			Username:   fmt.Sprintf("UserName%d", i),
+			Passphrase: p1,
+			FirstName:  fmt.Sprintf("Name%d", i),
+			LastName:   fmt.Sprintf("Last%d", i),
+			Email:      fmt.Sprintf("bot%d@gmail.com", i),
+		})
+	}
 	for _, user := range users {
 		if result := UsersDB.Create(&user); result.Error != nil {
 			fmt.Println(result.Error)
 		}
+	}
+}
+
+func paginate(value interface{}, pagination *dto.Pagination, db *gorm.DB) func(db *gorm.DB) *gorm.DB {
+	var totalRows int64
+	db.Model(value).Count(&totalRows)
+	pagination.TotalRows = totalRows
+	totalPages := int(math.Ceil(float64(totalRows) / float64(pagination.Limit)))
+	pagination.TotalPages = totalPages
+
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Offset(pagination.GetOffset()).Limit(pagination.GetLimit()).Order(pagination.GetSort())
 	}
 }
