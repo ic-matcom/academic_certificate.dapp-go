@@ -10,7 +10,6 @@ import (
 	"dapp/service/auth"
 	"dapp/service/utils"
 	"fmt"
-
 	"github.com/go-playground/validator/v10"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/context"
@@ -190,13 +189,11 @@ func (h HAuth) getUserProfile(ctx iris.Context, params dto.InjectedParam, servic
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /users [get]
 func (h HAuth) getUsers(ctx iris.Context, service service.ISvcUser) {
-	pagination := dto.Pagination{
-		Limit: ctx.URLParamIntDefault("limit", 0),
-		Page:  ctx.URLParamIntDefault("page", 0),
-		Sort:  ctx.URLParamDefault("sort", ""),
-	}
+	pagination := new(dto.Pagination)
+	lib.ParamsToStruct(ctx, pagination)
+
 	fmt.Printf("page %d, Limit %d", pagination.Page, pagination.Limit)
-	users, problem := service.GetUsersSvc(&pagination)
+	users, problem := service.GetUsersSvc(pagination)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
