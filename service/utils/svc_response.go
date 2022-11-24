@@ -1,8 +1,9 @@
 package utils
 
 import (
-	"github.com/kataras/iris/v12"
 	"dapp/schema/dto"
+
+	"github.com/kataras/iris/v12"
 )
 
 type SvcResponse struct {
@@ -103,6 +104,13 @@ func (s SvcResponse) ResErr(apiError *dto.Problem, ctx *iris.Context) {
 	(*ctx).StopWithProblem(int(apiError.Status), iris.NewProblem().Title(apiError.Title).Detail(d))
 
 	return
+}
+
+// ResUnauthorized create a unauthorized response (401)
+//
+// - ctx [*iris.Context] ~ Iris Request context
+func (s SvcResponse) ResUnauthorized(ctx *iris.Context) {
+	(*ctx).StatusCode(iris.StatusUnauthorized)
 }
 
 // endregion =============================================================================

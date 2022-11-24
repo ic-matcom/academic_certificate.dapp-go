@@ -6,6 +6,7 @@ import (
 	"dapp/schema"
 	"dapp/schema/dto"
 	"dapp/schema/mapper"
+	"dapp/schema/models"
 	"dapp/service"
 	"dapp/service/auth"
 	"dapp/service/utils"
@@ -78,6 +79,9 @@ func NewAuthHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 		// User management CRUD
 		guardUserManagerRouter := v1.Party("/users")
 		{
+			// --- GROUP / PARTY MIDDLEWARES ---
+			guardAuthRouter.Use(*mdwAuthChecker) // registering access token checker middleware
+
 			guardUserManagerRouter.Get("", hero.Handler(h.getUsers))
 			guardUserManagerRouter.Get("/roles", hero.Handler(h.getRoles))
 			guardUserManagerRouter.Post("", hero.Handler(h.postUser))
@@ -189,7 +193,12 @@ func (h HAuth) getUserProfile(ctx iris.Context, params dto.InjectedParam, servic
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /users [get]
-func (h HAuth) getUsers(ctx iris.Context, service service.ISvcUser) {
+func (h HAuth) getUsers(ctx iris.Context, params dto.InjectedParam, service service.ISvcUser) {
+	if params.Role != models.Role_SystemAdmin {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
+
 	pagination := new(dto.Pagination)
 	lib.ParamsToStruct(ctx, pagination)
 
@@ -211,7 +220,11 @@ func (h HAuth) getUsers(ctx iris.Context, service service.ISvcUser) {
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /users/roles [get]
-func (h HAuth) getRoles(ctx iris.Context, service service.ISvcUser) {
+func (h HAuth) getRoles(ctx iris.Context, params dto.InjectedParam, service service.ISvcUser) {
+	if params.Role != models.Role_SystemAdmin {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
 	resp, problem := service.GetRolesSvc()
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
@@ -233,7 +246,11 @@ func (h HAuth) getRoles(ctx iris.Context, service service.ISvcUser) {
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /users/{id} [get]
-func (h HAuth) getUserById(ctx iris.Context, service service.ISvcUser) {
+func (h HAuth) getUserById(ctx iris.Context, params dto.InjectedParam, service service.ISvcUser) {
+	if params.Role != models.Role_SystemAdmin {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
 	// checking param
 	userID := ctx.Params().GetIntDefault("id", -1)
 	if userID == -1 {
@@ -261,7 +278,11 @@ func (h HAuth) getUserById(ctx iris.Context, service service.ISvcUser) {
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /users/{id} [put]
-func (h HAuth) putUserById(ctx iris.Context, service service.ISvcUser) {
+func (h HAuth) putUserById(ctx iris.Context, params dto.InjectedParam, service service.ISvcUser) {
+	if params.Role != models.Role_SystemAdmin {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
 	// checking param
 	userID := ctx.Params().GetIntDefault("id", -1)
 	if userID == -1 {
@@ -297,7 +318,11 @@ func (h HAuth) putUserById(ctx iris.Context, service service.ISvcUser) {
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /users [post]
-func (h HAuth) postUser(ctx iris.Context, service service.ISvcUser) {
+func (h HAuth) postUser(ctx iris.Context, params dto.InjectedParam, service service.ISvcUser) {
+	if params.Role != models.Role_SystemAdmin {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
 	// getting data from client
 	var requestData dto.UserData
 
@@ -325,7 +350,11 @@ func (h HAuth) postUser(ctx iris.Context, service service.ISvcUser) {
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 500 {object} dto.Problem "err.generic
 // @Router /users/{id} [delete]
-func (h HAuth) deleteUserById(ctx iris.Context, service service.ISvcUser) {
+func (h HAuth) deleteUserById(ctx iris.Context, params dto.InjectedParam, service service.ISvcUser) {
+	if params.Role != models.Role_SystemAdmin {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
 	// checking param
 	userID := ctx.Params().GetIntDefault("id", -1)
 	if userID == -1 {
