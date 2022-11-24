@@ -80,7 +80,7 @@ func NewAuthHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 		guardUserManagerRouter := v1.Party("/users")
 		{
 			// --- GROUP / PARTY MIDDLEWARES ---
-			guardAuthRouter.Use(*mdwAuthChecker) // registering access token checker middleware
+			guardUserManagerRouter.Use(*mdwAuthChecker) // registering access token checker middleware
 
 			guardUserManagerRouter.Get("", hero.Handler(h.getUsers))
 			guardUserManagerRouter.Get("/roles", hero.Handler(h.getRoles))

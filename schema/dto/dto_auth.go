@@ -8,8 +8,8 @@ type UserCredIn struct {
 }
 
 type GrantIntentResponse struct {
-	Identifier string // if we use `json:"<source_name>"` we can map any source to a common particular / internal struct field as Identifier used here
-	Role       string
+	Username string // if we use `json:"<source_name>"` we can map any source to a common particular / internal struct field as Identifier used here
+	Role     string
 }
 
 // AccessTokenData using by this REST Api (HLF client node) to grant access to the resources
