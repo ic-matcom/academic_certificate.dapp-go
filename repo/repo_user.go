@@ -18,9 +18,19 @@ import (
 
 type RepoUser struct {
 	DBLocation string
+	DB         *gorm.DB
 }
 
 var singletonRU *RepoUser
+
+const (
+	Invalid          = "Inválido"
+	SystemAdmin      = "Administrador de Sistema"
+	CertificateAdmin = "Administrador de Certificados"
+	Secretary        = "Secretario"
+	Dean             = "Decano"
+	Rector           = "Rector"
+)
 
 // using Go sync package to invoke a method exactly only once
 var onceRU sync.Once
@@ -30,19 +40,16 @@ var onceRU sync.Once
 func NewRepoUser(svcConf *utils.SvcConfig) *RepoUser {
 	onceRU.Do(func() {
 		singletonRU = &RepoUser{DBLocation: svcConf.StoreDBPath}
-		InitDB()
-		PopulateDB()
+		singletonRU.InitDB()
+		singletonRU.PopulateDB()
 	})
 	return singletonRU
 }
 
-// DB to treat users persistence
-var UsersDB *gorm.DB
-
 // GetUser get the user from the DB
 func (r *RepoUser) GetUser(userID int) (models.User, error) {
 	var modelUser models.User
-	if result := UsersDB.First(&modelUser, userID); result.Error != nil {
+	if result := r.DB.First(&modelUser, userID); result.Error != nil {
 		return models.User{}, result.Error
 	}
 	return modelUser, nil
@@ -51,7 +58,7 @@ func (r *RepoUser) GetUser(userID int) (models.User, error) {
 // GetUser get the user from the DB
 func (r *RepoUser) GetUserByUsername(username string) (models.User, error) {
 	var modelUser models.User
-	if result := UsersDB.First(&modelUser, models.User{Username: username}); result.Error != nil {
+	if result := r.DB.First(&modelUser, models.User{Username: username}); result.Error != nil {
 		return models.User{}, result.Error
 	}
 	return modelUser, nil
@@ -60,7 +67,7 @@ func (r *RepoUser) GetUserByUsername(username string) (models.User, error) {
 // GetUsers return a list of dto.User
 func (r *RepoUser) GetUsers(pagination *dto.Pagination) (*dto.Pagination, error) {
 	var users []models.User
-	result := UsersDB.Scopes(paginate(users, pagination, UsersDB)).Find(&users)
+	result := r.DB.Scopes(paginate(users, pagination, r.DB)).Find(&users)
 	if result.Error != nil {
 		return &dto.Pagination{}, result.Error
 	}
@@ -71,7 +78,7 @@ func (r *RepoUser) GetUsers(pagination *dto.Pagination) (*dto.Pagination, error)
 // AddUser Add the user to database
 // Returns nil if user was added correctly, otherwise return error found
 func (r *RepoUser) AddUser(user models.User) (models.User, error) {
-	result := UsersDB.Create(&user)
+	result := r.DB.Create(&user)
 	return user, result.Error
 }
 
@@ -79,10 +86,10 @@ func (r *RepoUser) AddUser(user models.User) (models.User, error) {
 // Returns nil if user was updated correctly, otherwise return error found
 func (r *RepoUser) UpdateUser(userID int, user models.User) (models.User, error) {
 	var userInDB models.User
-	if result := UsersDB.First(&userInDB, userID); result.Error != nil {
+	if result := r.DB.First(&userInDB, userID); result.Error != nil {
 		return models.User{}, result.Error
 	}
-	result := UsersDB.Save(&user)
+	result := r.DB.Save(&user)
 	return user, result.Error
 }
 
@@ -90,26 +97,36 @@ func (r *RepoUser) UpdateUser(userID int, user models.User) (models.User, error)
 // Returns nil if user was removed correctly, otherwise return error found
 func (r *RepoUser) RemoveUser(userID int) (models.User, error) {
 	var modelUser models.User
-	if result := UsersDB.First(&modelUser, userID); result.Error != nil {
+	if result := r.DB.First(&modelUser, userID); result.Error != nil {
 		return models.User{}, result.Error
 	}
-	result := UsersDB.Delete(&modelUser)
+	result := r.DB.Delete(&modelUser)
 	return modelUser, result.Error
 }
 
-func InitDB() {
+func (r *RepoUser) GetRoles() ([]models.Role, error) {
+	var roles []models.Role
+	result := r.DB.Find(&roles)
+	return roles, result.Error
+}
+
+func (r *RepoUser) InitDB() {
 	dbURL := "postgres://pg:pass@localhost:5432/users"
 	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 	if err != nil {
 		log.Fatalln(err)
 	}
-	db.AutoMigrate(&models.User{})
-	UsersDB = db
+	db.AutoMigrate(&models.User{}, &models.Role{})
+	r.DB = db
+}
+func (r *RepoUser) PopulateDB() {
+	r.PopulateUserTable()
+	r.PopulateRolTable()
 }
 
-func PopulateDB() {
+func (r *RepoUser) PopulateUserTable() {
 	var usersInDB []models.User
-	if result := UsersDB.Find(&usersInDB); result.Error != nil {
+	if result := r.DB.Find(&usersInDB); result.Error != nil {
 		fmt.Println(result.Error)
 	}
 	if len(usersInDB) != 0 {
@@ -124,6 +141,7 @@ func PopulateDB() {
 			FirstName:  "Richard",
 			LastName:   "Sargon",
 			Email:      "richard.sargon@meinermail.com",
+			Role:       Secretary,
 		},
 		{
 			Username:   "tom",
@@ -131,6 +149,7 @@ func PopulateDB() {
 			FirstName:  "Tom",
 			LastName:   "Carter",
 			Email:      "tom.carter@meinermail.com",
+			Role:       Rector,
 		},
 		{
 			Username:   "Ariel",
@@ -138,6 +157,7 @@ func PopulateDB() {
 			FirstName:  "Ariel",
 			LastName:   "Huerta",
 			Email:      "ariel@gmail.com",
+			Role:       SystemAdmin,
 		},
 		{
 			Username:   "ALab",
@@ -145,6 +165,7 @@ func PopulateDB() {
 			FirstName:  "Alejandro",
 			LastName:   "Labourdette",
 			Email:      "alab@gmail.com",
+			Role:       Dean,
 		},
 	}
 	for i := 0; i < 100; i++ {
@@ -154,13 +175,48 @@ func PopulateDB() {
 			FirstName:  fmt.Sprintf("Name%d", i),
 			LastName:   fmt.Sprintf("Last%d", i),
 			Email:      fmt.Sprintf("bot%d@gmail.com", i),
+			Role:       CertificateAdmin,
 		})
 	}
 	for _, user := range users {
-		if result := UsersDB.Create(&user); result.Error != nil {
+		if result := r.DB.Create(&user); result.Error != nil {
 			fmt.Println(result.Error)
 		}
 	}
+}
+
+func (r *RepoUser) PopulateRolTable() {
+	var rolInDB []models.Role
+	if result := r.DB.Find(&rolInDB); result.Error != nil {
+		fmt.Println(result.Error)
+	}
+	if len(rolInDB) != 0 {
+		return
+	}
+	r.DB.Create(&models.Role{
+		Name:        Invalid,
+		Description: "Usuario que le fueron quitados sus privilegios.",
+	})
+	r.DB.Create(&models.Role{
+		Name:        SystemAdmin,
+		Description: "Usuario que puede gestionar los usuarios de la dapp.",
+	})
+	r.DB.Create(&models.Role{
+		Name:        CertificateAdmin,
+		Description: "Usuario que puede gestionar los certificados almacenados.",
+	})
+	r.DB.Create(&models.Role{
+		Name:        Secretary,
+		Description: "Usuario que valida los certificados emitidos.",
+	})
+	r.DB.Create(&models.Role{
+		Name:        Dean,
+		Description: "Usuario que valida los certificados emitidos.",
+	})
+	r.DB.Create(&models.Role{
+		Name:        Rector,
+		Description: "Usuario que valida los certificados emitidos.",
+	})
 }
 
 func paginate(value interface{}, pagination *dto.Pagination, db *gorm.DB) func(db *gorm.DB) *gorm.DB {

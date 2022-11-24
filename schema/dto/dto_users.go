@@ -8,6 +8,7 @@ type User struct {
 	FirstName  string `json:"firstname" validate:"required"`
 	LastName   string `json:"lastname" validate:"required"`
 	Email      string `json:"email" validate:"required,email"`
+	Role       string `json:"rol" validate:"required"`
 }
 
 type UserResponse struct {
@@ -16,6 +17,7 @@ type UserResponse struct {
 	FirstName string `json:"firstname" validate:"required"`
 	LastName  string `json:"lastname" validate:"required"`
 	Email     string `json:"email" validate:"required,email"`
+	Role      string `json:"rol" validate:"required"`
 }
 
 type UserData struct {
@@ -24,4 +26,5 @@ type UserData struct {
 	FirstName  string `json:"firstname" validate:"required"`
 	LastName   string `json:"lastname" validate:"required"`
 	Email      string `json:"email" validate:"required,email"`
+	Role       string `json:"rol" validate:"required"`
 }
