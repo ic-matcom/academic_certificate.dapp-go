@@ -9,7 +9,7 @@ import (
 	"dapp/service"
 	"dapp/service/auth"
 	"dapp/service/utils"
-	"fmt"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/context"
@@ -79,6 +79,7 @@ func NewAuthHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 		guardUserManagerRouter := v1.Party("/users")
 		{
 			guardUserManagerRouter.Get("", hero.Handler(h.getUsers))
+			guardUserManagerRouter.Get("/roles", hero.Handler(h.getRoles))
 			guardUserManagerRouter.Post("", hero.Handler(h.postUser))
 			guardUserManagerRouter.Get("/{id:string}", hero.Handler(h.getUserById))
 			guardUserManagerRouter.Put("/{id:string}", hero.Handler(h.putUserById))
@@ -192,13 +193,31 @@ func (h HAuth) getUsers(ctx iris.Context, service service.ISvcUser) {
 	pagination := new(dto.Pagination)
 	lib.ParamsToStruct(ctx, pagination)
 
-	fmt.Printf("page %d, Limit %d", pagination.Page, pagination.Limit)
 	users, problem := service.GetUsersSvc(pagination)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
 	}
 	h.response.ResOKWithData(users, &ctx)
+}
+
+// getRoles Get all roles from the BD.
+// @Summary Get roles
+// @Tags Users
+// @Security ApiKeyAuth
+// @Produce  json
+// @Param Authorization header string   true   "Insert access token"   default(Bearer <Add access token here>)
+// @Success 200 {object} []dto.UserResponse "OK"
+// @Failure 401 {object} dto.Problem "err.unauthorized"
+// @Failure 500 {object} dto.Problem "err.generic
+// @Router /users/roles [get]
+func (h HAuth) getRoles(ctx iris.Context, service service.ISvcUser) {
+	resp, problem := service.GetRolesSvc()
+	if problem != nil {
+		(*h.response).ResErr(problem, &ctx)
+		return
+	}
+	h.response.ResOKWithData(resp, &ctx)
 }
 
 // getUserById Get user by ID

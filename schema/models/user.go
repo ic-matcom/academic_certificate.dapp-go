@@ -7,4 +7,5 @@ type User struct {
 	FirstName  string `json:"firstname" validate:"required"`
 	LastName   string `json:"lastname" validate:"required"`
 	Email      string `json:"email" validate:"required,email"`
+	Role        string `json:"rol_id" validate:"required"`
 }
