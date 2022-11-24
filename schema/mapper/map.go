@@ -14,7 +14,7 @@ import (
 // TODO: ground the rol idea, according to the DApp app logic
 func ToAccessTokenDataV(obj *dto.GrantIntentResponse) *dto.AccessTokenData {
 	// claims := dto.Claims{ Sub: obj.Identifier, Rol: "undefined" }
-	claims := dto.InjectedParam{Username: obj.Identifier, Role: obj.Identifier}
+	claims := dto.InjectedParam{Username: obj.Identifier, Role: obj.Role}
 
 	return &dto.AccessTokenData{Scope: strings.Fields("dapp.fabric"), Claims: claims}
 }
