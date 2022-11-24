@@ -126,7 +126,7 @@ func TestListUsers(t *testing.T) {
 }
 
 func fakeAccessToken(username string) []byte {
-	tokenData := dto.AccessTokenData{Scope: strings.Fields("dapp.fabric"), Claims: dto.InjectedParam{ID: username, Username: username}}
+	tokenData := dto.AccessTokenData{Scope: strings.Fields("dapp.fabric"), Claims: dto.InjectedParam{Username: username, Role: username}}
 	accessToken, _ := lib.MkAccessToken(&tokenData, []byte(appConf.JWTSignKey), appConf.TkMaxAge)
 	return accessToken
 }

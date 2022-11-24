@@ -23,15 +23,6 @@ type RepoUser struct {
 
 var singletonRU *RepoUser
 
-const (
-	Invalid          = "Inválido"
-	SystemAdmin      = "Administrador de Sistema"
-	CertificateAdmin = "Administrador de Certificados"
-	Secretary        = "Secretario"
-	Dean             = "Decano"
-	Rector           = "Rector"
-)
-
 // using Go sync package to invoke a method exactly only once
 var onceRU sync.Once
 
@@ -141,7 +132,7 @@ func (r *RepoUser) PopulateUserTable() {
 			FirstName:  "Richard",
 			LastName:   "Sargon",
 			Email:      "richard.sargon@meinermail.com",
-			Role:       Secretary,
+			Role:       models.Role_Secretary,
 		},
 		{
 			Username:   "tom",
@@ -149,7 +140,7 @@ func (r *RepoUser) PopulateUserTable() {
 			FirstName:  "Tom",
 			LastName:   "Carter",
 			Email:      "tom.carter@meinermail.com",
-			Role:       Rector,
+			Role:       models.Role_Rector,
 		},
 		{
 			Username:   "Ariel",
@@ -157,7 +148,7 @@ func (r *RepoUser) PopulateUserTable() {
 			FirstName:  "Ariel",
 			LastName:   "Huerta",
 			Email:      "ariel@gmail.com",
-			Role:       SystemAdmin,
+			Role:       models.Role_SystemAdmin,
 		},
 		{
 			Username:   "ALab",
@@ -165,7 +156,7 @@ func (r *RepoUser) PopulateUserTable() {
 			FirstName:  "Alejandro",
 			LastName:   "Labourdette",
 			Email:      "alab@gmail.com",
-			Role:       Dean,
+			Role:       models.Role_Dean,
 		},
 	}
 	for i := 0; i < 100; i++ {
@@ -175,7 +166,7 @@ func (r *RepoUser) PopulateUserTable() {
 			FirstName:  fmt.Sprintf("Name%d", i),
 			LastName:   fmt.Sprintf("Last%d", i),
 			Email:      fmt.Sprintf("bot%d@gmail.com", i),
-			Role:       CertificateAdmin,
+			Role:       models.Role_CertificateAdmin,
 		})
 	}
 	for _, user := range users {
@@ -194,27 +185,27 @@ func (r *RepoUser) PopulateRolTable() {
 		return
 	}
 	r.DB.Create(&models.Role{
-		Name:        Invalid,
+		Name:        models.Role_Invalid,
 		Description: "Usuario que le fueron quitados sus privilegios.",
 	})
 	r.DB.Create(&models.Role{
-		Name:        SystemAdmin,
+		Name:        models.Role_SystemAdmin,
 		Description: "Usuario que puede gestionar los usuarios de la dapp.",
 	})
 	r.DB.Create(&models.Role{
-		Name:        CertificateAdmin,
+		Name:        models.Role_CertificateAdmin,
 		Description: "Usuario que puede gestionar los certificados almacenados.",
 	})
 	r.DB.Create(&models.Role{
-		Name:        Secretary,
+		Name:        models.Role_Secretary,
 		Description: "Usuario que valida los certificados emitidos.",
 	})
 	r.DB.Create(&models.Role{
-		Name:        Dean,
+		Name:        models.Role_Dean,
 		Description: "Usuario que valida los certificados emitidos.",
 	})
 	r.DB.Create(&models.Role{
-		Name:        Rector,
+		Name:        models.Role_Rector,
 		Description: "Usuario que valida los certificados emitidos.",
 	})
 }
