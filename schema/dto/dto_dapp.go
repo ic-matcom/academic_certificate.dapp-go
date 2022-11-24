@@ -10,7 +10,7 @@ type CommonHeaders struct {
 	PayloadType  string `json:"payloadType" validate:"required" example:"object"` // object | array
 	Signer       string `json:"signer" validate:"required" example:"User1"`
 	ChannelID    string `json:"channel" validate:"required" example:"mychannel"`
-	ChaincodeID  string `json:"chaincode" validate:"required" example:"traceability"`
+	ChaincodeID  string `json:"chaincode" validate:"required" example:"certificate"`
 	ContractName string `json:"contractName,omitempty" example:""`
 }
 

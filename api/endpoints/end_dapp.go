@@ -52,6 +52,8 @@ func NewDappHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 
 			protectedAPI.Post("/query", hero.Handler(h.postQuery))
 			protectedAPI.Post("/transaction", hero.Handler(h.postTransaction))
+
+			protectedAPI.Post("/create_asset", hero.Handler(h.postCreateAsset))
 		}
 	}
 	return h
@@ -112,6 +114,47 @@ func (h DappHandler) postTransaction(ctx iris.Context, params dto.InjectedParam)
 	// getting data from client
 	var requestData dto.Transaction
 
+	// unmarshalling the json and check
+	if err := ctx.ReadJSON(&requestData); err != nil {
+		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
+		return
+	}
+	// trying to submit the transaction
+	bcRes, problem := (*h.service).Invoke(requestData, params.Username)
+	if problem != nil {
+		(*h.response).ResErr(problem, &ctx)
+		return
+	}
+
+	(*h.response).ResOKWithData(bcRes, &ctx)
+}
+
+// postCreateAsset Create Asset in ledger
+// @Summary Send transaction to peers
+// @description.markdown CreateAsset
+// @Tags Certificate
+// @Security ApiKeyAuth
+// @Accept  json
+// @Produce json
+// @Param	Authorization	header	string	true 	"Insert access token" default(Bearer <Add access token here>)
+// @Param   channel         query  string   true  "Insert channel" default(mychannel)"
+// @Param   chaincode     query  string   true  "Insert chaincode id" default(certificate)"
+// @Param   signer          query  string   true  "Insert signer" default(User1)"
+// @Param 	Transaction		body 	dto.Asset	true	"Transaction Data"
+// @Success 202 {object} dto.Asset "OK"
+// @Failure 401 {object} dto.Problem "err.unauthorized"
+// @Failure 400 {object} dto.Problem "err.processing_param"
+// @Failure 502 {object} dto.Problem "err.bad_gateway"
+// @Failure 504 {object} dto.Problem "err.network"
+// @Router /dapp/create_asset [post]
+func (h DappHandler) postCreateAsset(ctx iris.Context, params dto.InjectedParam) {
+	// getting data from client
+	// TODO: usar aqui la funcion que se implemento para cargar los param a una struct
+	channel := ctx.URLParamDefault("channel", ",mychannel")
+	chaincode := ctx.URLParamDefault("chaincode", "certificate")
+	signer := ctx.URLParamDefault("signer", ",User1")
+	var requestData dto.Asset
+
 	fmt.Println("2")
 	// unmarshalling the json and check
 	if err := ctx.ReadJSON(&requestData); err != nil {
@@ -120,7 +163,7 @@ func (h DappHandler) postTransaction(ctx iris.Context, params dto.InjectedParam)
 	}
 	fmt.Println("3")
 	// trying to submit the transaction
-	bcRes, problem := (*h.service).Invoke(requestData, params.Username)
+	bcRes, problem := (*h.service).CreateAsset(requestData, params.Username, channel, chaincode, signer)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return

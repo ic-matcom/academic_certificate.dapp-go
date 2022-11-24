@@ -6,12 +6,13 @@
 {
   "func": "CreateAsset",
   "headers": {
+    "chaincode": "certificate",
     "channel": "mychannel",
     "contractName": "basic",
-    "signer": ""
+    "payloadType": "array",
+    "signer": "User1"
   },
   "payload": ["1","blue","35","tom","1000"],
-  "isSchema": false,
   "strongRead": false
 }
 ```
@@ -20,11 +21,13 @@
 > Query CreateAsset transaction using a json object  in basic chaincode `https://github.com/kmilodenisglez/fabric-testnet-nano-without-syschannel/tree/main/chaincodes-external/cc-assettransfer-go`
 ```json
 {
-  "func": "CreateAssetUsingStructParam",
+  "func": "CreateAsset",
   "headers": {
+    "chaincode": "certificate",
     "channel": "mychannel",
     "contractName": "basic",
-    "signer": ""
+    "payloadType": "array",
+    "signer": "User1"
   },
   "payload": {
     "ID": "14",
@@ -32,8 +35,7 @@
     "size": 101,
     "owner": "kmilo",
     "appraisedValue": 90
-   },
-  "isSchema": true,
+  },
   "strongRead": false
 }
 ```
