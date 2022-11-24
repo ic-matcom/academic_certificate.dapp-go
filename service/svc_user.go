@@ -17,6 +17,7 @@ import (
 type ISvcUser interface {
 	// user functions
 
+	GetRolesSvc() (*dto.Pagination, *dto.Problem)
 	GetUserSvc(userID int) (dto.UserResponse, *dto.Problem)
 	GetUserByUsernameSvc(username string) (dto.UserResponse, *dto.Problem)
 	GetUsersSvc(pagination *dto.Pagination) (*dto.Pagination, *dto.Problem)
@@ -37,6 +38,14 @@ func NewSvcUserReqs(repoUser *repo.RepoUser) ISvcUser {
 }
 
 // region ======== METHODS ======================================================
+
+func (s *svcUser) GetRolesSvc() (*dto.Pagination, *dto.Problem) {
+	res, err := (*s.repoUser).GetRoles()
+	if err != nil {
+		return nil, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
+	}
+	return &dto.Pagination{Rows: res}, nil
+}
 
 func (s *svcUser) GetUserSvc(userID int) (dto.UserResponse, *dto.Problem) {
 	res, err := (*s.repoUser).GetUser(userID)

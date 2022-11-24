@@ -27,6 +27,18 @@ func DepObtainUserDid(ctx iris.Context) dto.InjectedParam {
 	return tkData.Claims
 }
 
+func ParamsToStruct(ctx iris.Context, resStruct any) error {
+	paramsMap := ctx.URLParams()
+	paramsEncoded, err := json.Marshal(paramsMap)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(paramsEncoded, &resStruct); err != nil {
+		return err
+	}
+	return nil
+}
+
 func Contains(arr []string, elem string) bool {
 	for _, e := range arr {
 		if elem == e {

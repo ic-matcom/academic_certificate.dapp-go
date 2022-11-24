@@ -28,7 +28,7 @@ func (p *ProviderDrone) GrantIntent(uCred *dto.UserCredIn, options interface{}) 
 	}
 	checksum, _ := lib.Checksum("SHA256", []byte(uCred.Password))
 	if user.Passphrase == checksum {
-		return &dto.GrantIntentResponse{Identifier: user.Username}, nil
+		return &dto.GrantIntentResponse{Identifier: user.Username, Role: user.Role}, nil
 	}
 
 	return nil, lib.NewProblem(iris.StatusUnauthorized, schema.ErrFile, schema.ErrCredsNotFound)
