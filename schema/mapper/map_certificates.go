@@ -5,8 +5,8 @@ import (
 	"dapp/schema/dto"
 )
 
-func MapCreateAsset2Asset(asset dto.CreateAsset) dto.Asset {
-	return dto.Asset{
+func MapCreateAsset2Asset(asset *dto.CreateAsset) *dto.Asset {
+	return &dto.Asset{
 		DocType:               schema.DocType,
 		Certification:         asset.Certification,
 		GoldCertificate:       asset.GoldCertificate,

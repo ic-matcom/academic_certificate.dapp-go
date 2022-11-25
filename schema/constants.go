@@ -77,9 +77,10 @@ const (
 
 const (
 	DocType       = "CERT"
-	CreateAsset   = "CreateAsset"
 	ValidateAsset = "ValidateAsset"
 	ReadAsset     = "ReadAsset"
+	CreateAsset   = "CreateAsset"
+	UpdateAsset   = "UpdateAsset"
 	DeleteAsset   = "DeleteAsset"
 )
 
