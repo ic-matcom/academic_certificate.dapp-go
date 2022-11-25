@@ -185,27 +185,33 @@ func (r *RepoUser) PopulateRolTable() {
 		return
 	}
 	r.DB.Create(&models.Role{
-		Name:        models.Role_Invalid,
+		Label:       models.Role_Invalid,
+		Name:        "Usuario Invalidado",
 		Description: "Usuario que le fueron quitados sus privilegios.",
 	})
 	r.DB.Create(&models.Role{
-		Name:        models.Role_SystemAdmin,
+		Label:       models.Role_SystemAdmin,
+		Name:        "Administrador de Sistemas",
 		Description: "Usuario que puede gestionar los usuarios de la dapp.",
 	})
 	r.DB.Create(&models.Role{
-		Name:        models.Role_CertificateAdmin,
+		Label:       models.Role_CertificateAdmin,
+		Name:        "Administrador de Certificados",
 		Description: "Usuario que puede gestionar los certificados almacenados.",
 	})
 	r.DB.Create(&models.Role{
-		Name:        models.Role_Secretary,
+		Label:       models.Role_Secretary,
+		Name:        "Secretario General",
 		Description: "Usuario que valida los certificados emitidos.",
 	})
 	r.DB.Create(&models.Role{
-		Name:        models.Role_Dean,
+		Label:       models.Role_Dean,
+		Name:        "Decano de Facultad",
 		Description: "Usuario que valida los certificados emitidos.",
 	})
 	r.DB.Create(&models.Role{
-		Name:        models.Role_Rector,
+		Label:       models.Role_Rector,
+		Name:        "Rector de Universidad",
 		Description: "Usuario que valida los certificados emitidos.",
 	})
 }
