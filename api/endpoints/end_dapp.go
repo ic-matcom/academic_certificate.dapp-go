@@ -60,7 +60,8 @@ func NewDappHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 			protectedAPI.Get("/certificates/{id: string}", hero.Handler(h.getAssetById))
 			protectedAPI.Post("/certificates", hero.Handler(h.postCreateAsset))
 			protectedAPI.Put("/certificates", hero.Handler(h.putUpdateAsset))
-			protectedAPI.Put("/validate_asset", hero.Handler(h.putValidateAsset))
+			protectedAPI.Put("/validate_certificate", hero.Handler(h.putValidateCertificate))
+			protectedAPI.Put("/invalidate_certificate", hero.Handler(h.putInvalidateCertificate))
 			protectedAPI.Delete("/certificates/{id: string}", hero.Handler(h.deleteAssetById))
 		}
 	}
@@ -243,7 +244,7 @@ func (h DappHandler) getAssetById(ctx iris.Context, params dto.InjectedParam) {
 	(*h.response).ResOKWithData(bcRes, &ctx)
 }
 
-// putValidateAsset Validate Asset in ledger
+// putValidateCertificate Validate Asset in ledger
 // @Summary Send transaction to peers
 // @Tags Certificate
 // @Security ApiKeyAuth
@@ -259,8 +260,8 @@ func (h DappHandler) getAssetById(ctx iris.Context, params dto.InjectedParam) {
 // @Failure 400 {object} dto.Problem "err.processing_param"
 // @Failure 502 {object} dto.Problem "err.bad_gateway"
 // @Failure 504 {object} dto.Problem "err.network"
-// @Router /dapp/validate_asset [put]
-func (h DappHandler) putValidateAsset(ctx iris.Context, params dto.InjectedParam) {
+// @Router /dapp/validate_certificate [put]
+func (h DappHandler) putValidateCertificate(ctx iris.Context, params dto.InjectedParam) {
 	queryParams := new(dto.QueryParamChaincode)
 	lib.ParamsToStruct(ctx, queryParams)
 
@@ -272,6 +273,43 @@ func (h DappHandler) putValidateAsset(ctx iris.Context, params dto.InjectedParam
 	}
 	// trying to submit the transaction
 	bcRes, problem := (*h.service).ValidateAsset(&requestData, &params, queryParams)
+	if problem != nil {
+		(*h.response).ResErr(problem, &ctx)
+		return
+	}
+
+	(*h.response).ResOKWithData(bcRes, &ctx)
+}
+
+// putInvalidateCertificate Invalidate Asset in ledger
+// @Summary Send transaction to peers
+// @Tags Certificate
+// @Security ApiKeyAuth
+// @Accept  json
+// @Produce json
+// @Param	Authorization	header	string	             true  "Insert access token" default(Bearer <Add access token here>)
+// @Param   channel         query   string               true  "Insert channel" default(mychannel)"
+// @Param   chaincode       query   string               true  "Insert chaincode id" default(certificate)"
+// @Param   signer          query   string               true  "Insert signer" default(User1)"
+// @Param 	Transaction		body 	dto.InvalidateAsset	 true  "Transaction Data"
+// @Success 202 {object} dto.Asset "OK"
+// @Failure 401 {object} dto.Problem "err.unauthorized"
+// @Failure 400 {object} dto.Problem "err.processing_param"
+// @Failure 502 {object} dto.Problem "err.bad_gateway"
+// @Failure 504 {object} dto.Problem "err.network"
+// @Router /dapp/invalidate_certificate [put]
+func (h DappHandler) putInvalidateCertificate(ctx iris.Context, params dto.InjectedParam) {
+	queryParams := new(dto.QueryParamChaincode)
+	lib.ParamsToStruct(ctx, queryParams)
+
+	var requestData dto.InvalidateAsset
+	// unmarshalling the json and check
+	if err := ctx.ReadJSON(&requestData); err != nil {
+		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
+		return
+	}
+	// trying to submit the transaction
+	bcRes, problem := (*h.service).InvalidateAsset(&requestData, &params, queryParams)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return

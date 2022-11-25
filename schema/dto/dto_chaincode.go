@@ -52,7 +52,10 @@ type ValidateAsset struct {
 	Validator  string        `json:"validator"`
 	ValidatorT ValidatorType `json:"validator_type"`
 }
-
+type InvalidateAsset struct {
+	ID          string `json:"ID" validate:"required"`
+	Description string `json:"description" validate:"required"`
+}
 type CreateAsset struct {
 	Certification         string `json:"certification" validate:"required"`
 	GoldCertificate       bool   `json:"gold_certificate" validate:"required"`
@@ -62,11 +65,6 @@ type CreateAsset struct {
 	CreatedBy             string `json:"created_by" validate:"required"`
 	FacultyVolumeFolio    string `json:"volume_folio_faculty" validate:"required"`
 	UniversityVolumeFolio string `json:"volume_folio_university" validate:"required"`
-}
-
-type InvalidateAsset struct {
-	ID            string `json:"ID" validate:"required"`
-	InvalidReason string `json:"invalid_reason" validate:"required"`
 }
 
 type SignAsset struct {
