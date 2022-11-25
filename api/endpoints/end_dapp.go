@@ -5,6 +5,7 @@ import (
 	"dapp/repo"
 	"dapp/schema"
 	"dapp/schema/dto"
+	"dapp/schema/models"
 	"dapp/service"
 	"dapp/service/utils"
 	"encoding/json"
@@ -120,6 +121,10 @@ func (h DappHandler) postQuery(ctx *context.Context, params dto.InjectedParam) {
 // @Failure 504 {object} dto.Problem "err.network"
 // @Router /dapp/transaction [post]
 func (h DappHandler) postTransaction(ctx iris.Context, params dto.InjectedParam) {
+	if params.Role != models.Role_CertificateAdmin {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
 	// getting data from client
 	var requestData dto.Transaction
 
@@ -157,6 +162,10 @@ func (h DappHandler) postTransaction(ctx iris.Context, params dto.InjectedParam)
 // @Failure 504 {object} dto.Problem "err.network"
 // @Router /dapp/certificates [post]
 func (h DappHandler) postCreateAsset(ctx iris.Context, params dto.InjectedParam) {
+	if params.Role != models.Role_CertificateAdmin {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
 	queryParams := new(dto.QueryParamChaincode)
 	lib.ParamsToStruct(ctx, queryParams)
 
@@ -194,6 +203,10 @@ func (h DappHandler) postCreateAsset(ctx iris.Context, params dto.InjectedParam)
 // @Failure 504 {object} dto.Problem "err.network"
 // @Router /dapp/certificates [put]
 func (h DappHandler) putUpdateAsset(ctx iris.Context, params dto.InjectedParam) {
+	if params.Role != models.Role_CertificateAdmin {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
 	queryParams := new(dto.QueryParamChaincode)
 	lib.ParamsToStruct(ctx, queryParams)
 
@@ -262,6 +275,10 @@ func (h DappHandler) getAssetById(ctx iris.Context, params dto.InjectedParam) {
 // @Failure 504 {object} dto.Problem "err.network"
 // @Router /dapp/validate_certificate [put]
 func (h DappHandler) putValidateCertificate(ctx iris.Context, params dto.InjectedParam) {
+	if lib.Contains([]string{models.Role_Secretary, models.Role_Dean, models.Role_Rector}, params.Role) {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
 	queryParams := new(dto.QueryParamChaincode)
 	lib.ParamsToStruct(ctx, queryParams)
 
@@ -299,6 +316,10 @@ func (h DappHandler) putValidateCertificate(ctx iris.Context, params dto.Injecte
 // @Failure 504 {object} dto.Problem "err.network"
 // @Router /dapp/invalidate_certificate [put]
 func (h DappHandler) putInvalidateCertificate(ctx iris.Context, params dto.InjectedParam) {
+	if lib.Contains([]string{models.Role_Secretary, models.Role_Dean, models.Role_Rector, models.Role_CertificateAdmin}, params.Role) {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
 	queryParams := new(dto.QueryParamChaincode)
 	lib.ParamsToStruct(ctx, queryParams)
 
@@ -336,6 +357,10 @@ func (h DappHandler) putInvalidateCertificate(ctx iris.Context, params dto.Injec
 // @Failure 504 {object} dto.Problem "err.network"
 // @Router /dapp/certificates/{id} [delete]
 func (h DappHandler) deleteAssetById(ctx iris.Context, params dto.InjectedParam) {
+	if params.Role != models.Role_CertificateAdmin {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
 	id := ctx.Params().GetString("id")
 	queryParams := new(dto.QueryParamChaincode)
 	lib.ParamsToStruct(ctx, queryParams)
