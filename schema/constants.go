@@ -83,6 +83,7 @@ const (
 	CreateAsset     = "CreateAsset"
 	UpdateAsset     = "UpdateAsset"
 	DeleteAsset     = "DeleteAsset"
+	GuestUser       = "GuestUser"
 )
 
 // endregion =============================================================================

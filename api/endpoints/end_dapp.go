@@ -47,6 +47,12 @@ func NewDappHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 	// Simple group: v1
 	v1 := app.Party("/api/v1")
 	{
+		publicAPI := v1.Party("/dapp")
+		{
+			publicAPI.Get("/certificates_by_state/{state: int}", hero.Handler(h.getCertificatesByState))
+			publicAPI.Get("/certificates_by_accredited/{accredited: string}", hero.Handler(h.getCertificatesByAccredited))
+			publicAPI.Get("/certificates/{id: string}", hero.Handler(h.getAssetById))
+		}
 		// registering protected / guarded router
 		protectedAPI := v1.Party("/dapp")
 		{
@@ -55,10 +61,6 @@ func NewDappHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 
 			protectedAPI.Post("/query", hero.Handler(h.postQuery))
 			protectedAPI.Post("/transaction", hero.Handler(h.postTransaction))
-
-			protectedAPI.Get("/certificates_by_state/{state: int}", hero.Handler(h.getCertificatesByState))
-			protectedAPI.Get("/certificates_by_accredited/{accredited: string}", hero.Handler(h.getCertificatesByAccredited))
-			protectedAPI.Get("/certificates/{id: string}", hero.Handler(h.getAssetById))
 			protectedAPI.Post("/certificates", hero.Handler(h.postCreateAsset))
 			protectedAPI.Put("/certificates", hero.Handler(h.putUpdateAsset))
 			protectedAPI.Put("/validate_certificate", hero.Handler(h.putValidateCertificate))
@@ -232,7 +234,6 @@ func (h DappHandler) putUpdateAsset(ctx iris.Context, params dto.InjectedParam) 
 // @Security ApiKeyAuth
 // @Accept  json
 // @Produce json
-// @Param	Authorization	header	string	   true  "Insert access token" default(Bearer <Add access token here>)
 // @Param 	id		    	path 	string     true	 "Cartificate ID"
 // @Param   channel         query   string     true  "Insert channel" default(mychannel)"
 // @Param   chaincode       query   string     true  "Insert chaincode id" default(certificate)"
@@ -243,12 +244,12 @@ func (h DappHandler) putUpdateAsset(ctx iris.Context, params dto.InjectedParam) 
 // @Failure 502 {object} dto.Problem "err.bad_gateway"
 // @Failure 504 {object} dto.Problem "err.network"
 // @Router /dapp/certificates/{id} [get]
-func (h DappHandler) getAssetById(ctx iris.Context, params dto.InjectedParam) {
+func (h DappHandler) getAssetById(ctx iris.Context) {
 	id := ctx.Params().GetString("id")
 	queryParams := new(dto.QueryParamChaincode)
 	lib.ParamsToStruct(ctx, queryParams)
 
-	bcRes, problem := (*h.service).GetAsset(id, params.Username, queryParams)
+	bcRes, problem := (*h.service).GetAsset(id, schema.GuestUser, queryParams)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
@@ -380,7 +381,6 @@ func (h DappHandler) deleteAssetById(ctx iris.Context, params dto.InjectedParam)
 // @Security ApiKeyAuth
 // @Accept  json
 // @Produce json
-// @Param	Authorization	header	string	true 	"Insert access token" default(Bearer <Add access token here>)
 // @Param 	state		    path 	int 	true	"State of the assets"
 // @Param 	page_limit		query 	int 	true	"Amount of assets per page" default(5)"
 // @Param   bookmark        query   string  false   "Bookmark to know last asset gotten"
@@ -393,7 +393,7 @@ func (h DappHandler) deleteAssetById(ctx iris.Context, params dto.InjectedParam)
 // @Failure 502 {object} dto.Problem "err.bad_gateway"
 // @Failure 504 {object} dto.Problem "err.network"
 // @Router /dapp/certificates_by_state/{state} [get]
-func (h DappHandler) getCertificatesByState(ctx *context.Context, params dto.InjectedParam) {
+func (h DappHandler) getCertificatesByState(ctx *context.Context) {
 	state := ctx.Params().GetIntDefault("state", -1)
 	if state == -1 {
 		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
@@ -423,7 +423,7 @@ func (h DappHandler) getCertificatesByState(ctx *context.Context, params dto.Inj
 		return
 	}
 
-	bcRes, problem := (*h.service).Query(query, params.Username)
+	bcRes, problem := (*h.service).Query(query, schema.GuestUser)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
@@ -438,7 +438,6 @@ func (h DappHandler) getCertificatesByState(ctx *context.Context, params dto.Inj
 // @Security ApiKeyAuth
 // @Accept  json
 // @Produce json
-// @Param	Authorization	header	string	true 	"Insert access token" default(Bearer <Add access token here>)
 // @Param 	accredited  	path 	string 	true	"Person to whom the certificates were emitted"
 // @Param 	page_limit		query 	int 	true	"Amount of assets per page" default(5)"
 // @Param   bookmark        query   string  false   "Bookmark to know last asset gotten"
@@ -451,8 +450,8 @@ func (h DappHandler) getCertificatesByState(ctx *context.Context, params dto.Inj
 // @Failure 502 {object} dto.Problem "err.bad_gateway"
 // @Failure 504 {object} dto.Problem "err.network"
 // @Router /dapp/certificates_by_accredited/{accredited} [get]
-func (h DappHandler) getCertificatesByAccredited(ctx *context.Context, params dto.InjectedParam) {
-	accredited := ctx.Params().GetDefault("accredited", "")
+func (h DappHandler) getCertificatesByAccredited(ctx *context.Context) {
+	accredited := ctx.Params().GetStringDefault("accredited", "")
 	if accredited == "" {
 		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
 		return
@@ -471,7 +470,7 @@ func (h DappHandler) getCertificatesByAccredited(ctx *context.Context, params dt
 		  "payloadType": "object",
 		  "signer": "%s"
 		},
-		"payload": {"queryString":{"selector":{"docType":"CERT", "accredited":%d}}, "pageSize":%d, "bookmark":"%s"},
+		"payload": {"queryString":{"selector":{"docType":"CERT", "accredited":"%s"}}, "pageSize":%d, "bookmark":"%s"},
 		"strongRead": false
 	}`, qp.Chaincode, qp.Channel, qp.Signer, accredited, qp.PageLimit, qp.Bookmark)
 
@@ -482,7 +481,7 @@ func (h DappHandler) getCertificatesByAccredited(ctx *context.Context, params dt
 		return
 	}
 
-	bcRes, problem := (*h.service).Query(query, params.Username)
+	bcRes, problem := (*h.service).Query(query, schema.GuestUser)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
