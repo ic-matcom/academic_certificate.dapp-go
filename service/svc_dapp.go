@@ -6,6 +6,7 @@ import (
 	"dapp/schema"
 	"dapp/schema/dto"
 	"dapp/schema/mapper"
+	"dapp/schema/models"
 	"fmt"
 	"time"
 
@@ -19,6 +20,7 @@ type ISvcDapp interface {
 	Query(query dto.Transaction, did string) (interface{}, *dto.Problem)
 	Invoke(req dto.Transaction, did string) (interface{}, *dto.Problem)
 	CreateAsset(req dto.CreateAsset, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem)
+	ValidateAsset(req dto.SignAsset, userParam *dto.InjectedParam, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem)
 }
 
 type svcDapp struct {
@@ -97,7 +99,50 @@ func (s *svcDapp) CreateAsset(req dto.CreateAsset, did string, queryParams *dto.
 		}},
 		ResponsePayload: dPayload,
 	}
-
 	return qResult, nil
+}
 
+func (s *svcDapp) ValidateAsset(req dto.SignAsset, userParam *dto.InjectedParam, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem) {
+
+	valAsset := dto.ValidateAsset{
+		ID:        req.ID,
+		Validator: req.SignedBy,
+	}
+	if userParam.Role == models.Role_Secretary {
+		valAsset.ValidatorT = dto.Secretary
+	} else if userParam.Role == models.Role_Dean {
+		valAsset.ValidatorT = dto.Dean
+	} else if userParam.Role == models.Role_Rector {
+		valAsset.ValidatorT = dto.Rector
+	} else {
+		return nil, lib.NewProblem(iris.StatusUnauthorized, "User have no permission to validate the certificate", "")
+	}
+
+	b, _ := lib.ToMap(&valAsset, "json")
+
+	tx := dto.Transaction{
+		RequestCommon: dto.RequestCommon{Headers: dto.RequestHeaders{CommonHeaders: dto.CommonHeaders{
+			PayloadType:  "object",
+			Signer:       queryParams.Signer,
+			ChannelID:    queryParams.Channel,
+			ChaincodeID:  queryParams.Chaincode,
+			ContractName: "",
+		}}},
+		Function:   schema.ValidateAsset,
+		Payload:    b,
+		StrongRead: false,
+	}
+	// requesting blockchain ledger
+	result, e := (*s.repoDapp).Invoke(tx, userParam.Username)
+	if e != nil {
+		return nil, lib.NewProblem(iris.StatusBadGateway, schema.ErrBlockchainTxs, e.Error())
+	}
+	dPayload := mapper.DecodePayload(result)
+	qResult := dto.TxReceipt{
+		ReplyCommon: dto.ReplyCommon{Headers: dto.ReplyHeaders{
+			CommonHeaders: tx.Headers.CommonHeaders,
+		}},
+		ResponsePayload: dPayload,
+	}
+	return qResult, nil
 }

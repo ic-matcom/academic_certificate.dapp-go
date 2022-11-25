@@ -10,6 +10,15 @@ const (
 	Valid                           // signed by Secretary, Dean and Rector
 )
 
+type ValidatorType uint
+
+const (
+	NoValidator ValidatorType = iota // invalidated for some reason
+	Secretary                        // certificate without signatures
+	Dean                             // signed by Secretary
+	Rector                           // signed by Secretary and Dean
+)
+
 //Auxiliary Functions
 func (state StateValidation) String() string {
 	names := []string{"Invalid", "New", "SignedS", "SignedSD", "Valid"}
@@ -36,6 +45,12 @@ type Asset struct {
 	UniversityVolumeFolio string          `json:"volume_folio_university" validate:"required"`
 	InvalidReason         string          `json:"invalid_reason"`
 	Status                StateValidation `json:"certificate_status" validate:"gte=0,lte=4"`
+}
+
+type ValidateAsset struct {
+	ID         string        `json:"ID"`
+	Validator  string        `json:"validator"`
+	ValidatorT ValidatorType `json:"validator_type"`
 }
 
 type CreateAsset struct {
