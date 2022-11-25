@@ -79,6 +79,7 @@ const (
 	DocType       = "CERT"
 	CreateAsset   = "CreateAsset"
 	ValidateAsset = "ValidateAsset"
+	ReadAsset     = "ReadAsset"
 )
 
 // endregion =============================================================================

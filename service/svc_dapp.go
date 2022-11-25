@@ -19,6 +19,7 @@ import (
 type ISvcDapp interface {
 	Query(query dto.Transaction, did string) (interface{}, *dto.Problem)
 	Invoke(req dto.Transaction, did string) (interface{}, *dto.Problem)
+	GetAsset(id string, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem)
 	CreateAsset(req dto.CreateAsset, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem)
 	ValidateAsset(req dto.SignAsset, userParam *dto.InjectedParam, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem)
 }
@@ -65,6 +66,35 @@ func (s *svcDapp) Invoke(req dto.Transaction, did string) (interface{}, *dto.Pro
 		ResponsePayload: dPayload,
 	}
 
+	return qResult, nil
+}
+
+func (s *svcDapp) GetAsset(id string, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem) {
+	b, _ := lib.ToMap(&dto.GetRequestCC{ID: id}, "json")
+	tx := dto.Transaction{
+		RequestCommon: dto.RequestCommon{Headers: dto.RequestHeaders{CommonHeaders: dto.CommonHeaders{
+			PayloadType:  "object",
+			Signer:       queryParams.Signer,
+			ChannelID:    queryParams.Channel,
+			ChaincodeID:  queryParams.Chaincode,
+			ContractName: "",
+		}}},
+		Function:   schema.ReadAsset,
+		Payload:    b,
+		StrongRead: false,
+	}
+	// requesting blockchain ledger
+	result, e := (*s.repoDapp).Query(tx, did)
+	if e != nil {
+		return nil, lib.NewProblem(iris.StatusBadGateway, schema.ErrBlockchainTxs, e.Error())
+	}
+	dPayload := mapper.DecodePayload(result)
+	qResult := dto.TxReceipt{
+		ReplyCommon: dto.ReplyCommon{Headers: dto.ReplyHeaders{
+			CommonHeaders: tx.Headers.CommonHeaders,
+		}},
+		ResponsePayload: dPayload,
+	}
 	return qResult, nil
 }
 

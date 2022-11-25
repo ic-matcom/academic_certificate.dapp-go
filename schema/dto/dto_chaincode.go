@@ -81,3 +81,6 @@ type QueryParamChaincode struct {
 	Bookmark  string `query:"bookmark"`
 	PageLimit int    `query:"page_limit"`
 }
+type GetRequestCC struct {
+	ID string `json:"id"`
+}
