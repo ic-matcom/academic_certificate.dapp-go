@@ -80,6 +80,7 @@ const (
 	CreateAsset   = "CreateAsset"
 	ValidateAsset = "ValidateAsset"
 	ReadAsset     = "ReadAsset"
+	DeleteAsset   = "DeleteAsset"
 )
 
 // endregion =============================================================================

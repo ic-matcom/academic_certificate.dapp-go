@@ -60,6 +60,7 @@ func NewDappHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 			protectedAPI.Get("/certificates/{id: string}", hero.Handler(h.getAssetById))
 			protectedAPI.Post("/certificates", hero.Handler(h.postCreateAsset))
 			protectedAPI.Post("/validate_asset", hero.Handler(h.postValidateAsset))
+			protectedAPI.Delete("/certificates/{id: string}", hero.Handler(h.deleteAssetById))
 		}
 	}
 	return h
@@ -233,6 +234,37 @@ func (h DappHandler) postValidateAsset(ctx iris.Context, params dto.InjectedPara
 	}
 	// trying to submit the transaction
 	bcRes, problem := (*h.service).ValidateAsset(requestData, &params, queryParams)
+	if problem != nil {
+		(*h.response).ResErr(problem, &ctx)
+		return
+	}
+
+	(*h.response).ResOKWithData(bcRes, &ctx)
+}
+
+// deleteAssetById Delete Asset from ledger with specified ID
+// @Summary Send transaction to peers
+// @Tags Certificate
+// @Security ApiKeyAuth
+// @Accept  json
+// @Produce json
+// @Param	Authorization	header	string	   true  "Insert access token" default(Bearer <Add access token here>)
+// @Param 	id		    	path 	string     true	 "Cartificate ID"
+// @Param   channel         query   string     true  "Insert channel" default(mychannel)"
+// @Param   chaincode       query   string     true  "Insert chaincode id" default(certificate)"
+// @Param   signer          query   string     true  "Insert signer" default(User1)"
+// @Success 202 {object} dto.Asset "OK"
+// @Failure 401 {object} dto.Problem "err.unauthorized"
+// @Failure 400 {object} dto.Problem "err.processing_param"
+// @Failure 502 {object} dto.Problem "err.bad_gateway"
+// @Failure 504 {object} dto.Problem "err.network"
+// @Router /dapp/certificates/{id} [delete]
+func (h DappHandler) deleteAssetById(ctx iris.Context, params dto.InjectedParam) {
+	id := ctx.Params().GetString("id")
+	queryParams := new(dto.QueryParamChaincode)
+	lib.ParamsToStruct(ctx, queryParams)
+
+	bcRes, problem := (*h.service).DeleteAsset(id, params.Username, queryParams)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
