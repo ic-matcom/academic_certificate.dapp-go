@@ -152,8 +152,6 @@ func (h DappHandler) postTransaction(ctx iris.Context, params dto.InjectedParam)
 // @Failure 504 {object} dto.Problem "err.network"
 // @Router /dapp/create_asset [post]
 func (h DappHandler) postCreateAsset(ctx iris.Context, params dto.InjectedParam) {
-	// getting data from client
-	// TODO: usar aqui la funcion que se implemento para cargar los param a una struct
 	queryParams := new(dto.QueryParamChaincode)
 	lib.ParamsToStruct(ctx, queryParams)
 
@@ -175,18 +173,17 @@ func (h DappHandler) postCreateAsset(ctx iris.Context, params dto.InjectedParam)
 
 // getCertificatesByState Performs a query in blockchain for certificates with some state
 // @Summary Performs a query in blockchain for certificates with some state
-// @description.markdown Query
 // @Tags DApp
 // @Security ApiKeyAuth
 // @Accept  json
 // @Produce json
 // @Param	Authorization	header	string	true 	"Insert access token" default(Bearer <Add access token here>)
 // @Param 	state		    path 	int 	true	"State of the assets"
-// @Param 	page_limit		query 	int 	false	"Amount of assets per page"
+// @Param 	page_limit		query 	int 	true	"Amount of assets per page" default(5)"
 // @Param   bookmark        query   string  false   "Bookmark to know last asset gotten"
-// @Param   channel         query   string          true  "Insert channel" default(mychannel)"
-// @Param   chaincode       query   string          true  "Insert chaincode id" default(certificate)"
-// @Param   signer          query   string          true  "Insert signer" default(User1)"
+// @Param   channel         query   string  true    "Insert channel" default(mychannel)"
+// @Param   chaincode       query   string  true    "Insert chaincode id" default(certificate)"
+// @Param   signer          query   string  true    "Insert signer" default(User1)"
 // @Success 200 {object} dto.QueryResult "OK"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 400 {object} dto.Problem "err.processing_param"
@@ -199,22 +196,22 @@ func (h DappHandler) getCertificatesByState(ctx *context.Context, params dto.Inj
 		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
 		return
 	}
-	page_limit := ctx.URLParamIntDefault("page_limit", 5)
-	bookmark := ctx.URLParamDefault("bookmark", "")
+	qp := new(dto.QueryParamChaincode)
+	lib.ParamsToStruct(ctx, qp)
 
 	queryJSON := fmt.Sprintf(`
 	{
 		"func": "common:QueryAssetsWithPagination",
 		"headers": {
-		  "chaincode": "certificate",
-		  "channel": "mychannel",
+		  "chaincode": "%s",
+		  "channel": "%s",
 		  "contractName": "",
 		  "payloadType": "object",
-		  "signer": "User1"
+		  "signer": "%s"
 		},
-		"payload": {"queryString":{"selector":{"docType":"CERT", "certificate_status":{"$eq":%d}}}, "pageSize":%d, "bookmark":"%s"},
+		"payload": {"queryString":{"selector":{"docType":"CERT", "certificate_status":%d}}, "pageSize":%d, "bookmark":"%s"},
 		"strongRead": false
-	}`, state, page_limit, bookmark)
+	}`, qp.Chaincode, qp.Channel, qp.Signer, state, qp.PageLimit, qp.Bookmark)
 	var query dto.Transaction
 
 	// unmarshalling the json and check
@@ -234,15 +231,17 @@ func (h DappHandler) getCertificatesByState(ctx *context.Context, params dto.Inj
 
 // getNewCertificates Performs a query in blockchain for certificates with some state
 // @Summary Performs a query in blockchain for certificates with some state
-// @description.markdown Query
 // @Tags DApp
 // @Security ApiKeyAuth
 // @Accept  json
 // @Produce json
 // @Param	Authorization	header	string	true 	"Insert access token" default(Bearer <Add access token here>)
 // @Param 	accredited  	path 	string 	true	"Person to whom the certificates were emitted"
-// @Param 	page_limit		query 	int 	false	"Amount of assets per page"
+// @Param 	page_limit		query 	int 	true	"Amount of assets per page" default(5)"
 // @Param   bookmark        query   string  false   "Bookmark to know last asset gotten"
+// @Param   channel         query   string  true    "Insert channel" default(mychannel)"
+// @Param   chaincode       query   string  true    "Insert chaincode id" default(certificate)"
+// @Param   signer          query   string  true    "Insert signer" default(User1)"
 // @Success 200 {object} dto.QueryResult "OK"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 400 {object} dto.Problem "err.processing_param"
@@ -255,24 +254,25 @@ func (h DappHandler) getCertificatesByAccredited(ctx *context.Context, params dt
 		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
 		return
 	}
-	page_limit := ctx.URLParamIntDefault("page_limit", 5)
-	bookmark := ctx.URLParamDefault("bookmark", "")
+
+	qp := new(dto.QueryParamChaincode)
+	lib.ParamsToStruct(ctx, qp)
 
 	queryJSON := fmt.Sprintf(`
 	{
 		"func": "common:QueryAssetsWithPagination",
 		"headers": {
-		  "chaincode": "certificate",
-		  "channel": "mychannel",
+		  "chaincode": "%s",
+		  "channel": "%s",
 		  "contractName": "",
 		  "payloadType": "object",
-		  "signer": "User1"
+		  "signer": "%s"
 		},
-		"payload": {"queryString":{"selector":{"docType":"CERT", "accredited":"%s"}}, "pageSize":%d, "bookmark":"%s"},
+		"payload": {"queryString":{"selector":{"docType":"CERT", "accredited":%d}}, "pageSize":%d, "bookmark":"%s"},
 		"strongRead": false
-	}`, accredited, page_limit, bookmark)
-	var query dto.Transaction
+	}`, qp.Chaincode, qp.Channel, qp.Signer, accredited, qp.PageLimit, qp.Bookmark)
 
+	var query dto.Transaction
 	// unmarshalling the json and check
 	if err := json.Unmarshal([]byte(queryJSON), &query); err != nil {
 		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)

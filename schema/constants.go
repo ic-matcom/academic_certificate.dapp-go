@@ -76,7 +76,8 @@ const (
 // region ========= CERTIFICATES =========================================================
 
 const (
-	DocType = "CERT"
+	DocType     = "CERT"
+	CreateAsset = "CreateAsset"
 )
 
 // endregion =============================================================================

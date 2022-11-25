@@ -64,5 +64,5 @@ type QueryParamChaincode struct {
 	Chaincode string `query:"chaincode"`
 	Signer    string `query:"signer"`
 	Bookmark  string `query:"bookmark"`
-	PageLimit string `query:"page_limit"`
+	PageLimit int    `query:"page_limit"`
 }

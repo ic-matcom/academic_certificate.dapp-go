@@ -81,7 +81,7 @@ func (s *svcDapp) CreateAsset(req dto.CreateAsset, did string, queryParams *dto.
 			ChaincodeID:  queryParams.Chaincode,
 			ContractName: "",
 		}}},
-		Function:   "CreateAsset", //TODO: esto si puede quedar anclado en el codigo, pero recomiendo que muevas todas TxName al schema/constants.go o un fichero .go similar
+		Function:   schema.CreateAsset,
 		Payload:    b,
 		StrongRead: false,
 	}
