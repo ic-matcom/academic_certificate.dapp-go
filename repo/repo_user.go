@@ -46,7 +46,7 @@ func (r *RepoUser) GetUser(userID int) (models.User, error) {
 	return modelUser, nil
 }
 
-// GetUser get the user from the DB
+// GetUserByUsername GetUser get the user from the DB
 func (r *RepoUser) GetUserByUsername(username string) (models.User, error) {
 	var modelUser models.User
 	if result := r.DB.First(&modelUser, models.User{Username: username}); result.Error != nil {
@@ -113,6 +113,7 @@ func (r *RepoUser) InvalidateUser(userID int) (models.User, error) {
 }
 
 func (r *RepoUser) InitDB() {
+	// TODO: move dbURL to configuration files conf.sample.unix, conf.sample.windows and conf.yaml
 	dbURL := "postgres://pg:pass@localhost:5432/users"
 	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 	if err != nil {
