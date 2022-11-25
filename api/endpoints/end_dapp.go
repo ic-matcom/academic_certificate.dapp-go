@@ -140,11 +140,11 @@ func (h DappHandler) postTransaction(ctx iris.Context, params dto.InjectedParam)
 // @Security ApiKeyAuth
 // @Accept  json
 // @Produce json
-// @Param	Authorization	header	string	true 	"Insert access token" default(Bearer <Add access token here>)
-// @Param   channel         query  string   true  "Insert channel" default(mychannel)"
-// @Param   chaincode     query  string   true  "Insert chaincode id" default(certificate)"
-// @Param   signer          query  string   true  "Insert signer" default(User1)"
-// @Param 	Transaction		body 	dto.Asset	true	"Transaction Data"
+// @Param	Authorization	header	string	        true  "Insert access token" default(Bearer <Add access token here>)
+// @Param   channel         query   string          true  "Insert channel" default(mychannel)"
+// @Param   chaincode       query   string          true  "Insert chaincode id" default(certificate)"
+// @Param   signer          query   string          true  "Insert signer" default(User1)"
+// @Param 	Transaction		body 	dto.CreateAsset	true  "Transaction Data"
 // @Success 202 {object} dto.Asset "OK"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 400 {object} dto.Problem "err.processing_param"
@@ -154,25 +154,21 @@ func (h DappHandler) postTransaction(ctx iris.Context, params dto.InjectedParam)
 func (h DappHandler) postCreateAsset(ctx iris.Context, params dto.InjectedParam) {
 	// getting data from client
 	// TODO: usar aqui la funcion que se implemento para cargar los param a una struct
-	channel := ctx.URLParamDefault("channel", ",mychannel")
-	chaincode := ctx.URLParamDefault("chaincode", "certificate")
-	signer := ctx.URLParamDefault("signer", ",User1")
-	var requestData dto.Asset
+	queryParams := new(dto.QueryParamChaincode)
+	lib.ParamsToStruct(ctx, queryParams)
 
-	fmt.Println("2")
+	var requestData dto.CreateAsset
 	// unmarshalling the json and check
 	if err := ctx.ReadJSON(&requestData); err != nil {
 		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
 		return
 	}
-	fmt.Println("3")
 	// trying to submit the transaction
-	bcRes, problem := (*h.service).CreateAsset(requestData, params.Username, channel, chaincode, signer)
+	bcRes, problem := (*h.service).CreateAsset(requestData, params.Username, queryParams)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
 	}
-	fmt.Println("4")
 
 	(*h.response).ResOKWithData(bcRes, &ctx)
 }
@@ -188,6 +184,9 @@ func (h DappHandler) postCreateAsset(ctx iris.Context, params dto.InjectedParam)
 // @Param 	state		    path 	int 	true	"State of the assets"
 // @Param 	page_limit		query 	int 	false	"Amount of assets per page"
 // @Param   bookmark        query   string  false   "Bookmark to know last asset gotten"
+// @Param   channel         query   string          true  "Insert channel" default(mychannel)"
+// @Param   chaincode       query   string          true  "Insert chaincode id" default(certificate)"
+// @Param   signer          query   string          true  "Insert signer" default(User1)"
 // @Success 200 {object} dto.QueryResult "OK"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 400 {object} dto.Problem "err.processing_param"

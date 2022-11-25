@@ -6,6 +6,9 @@ import (
 	"dapp/schema"
 	"dapp/schema/dto"
 	"dapp/schema/mapper"
+	"fmt"
+	"time"
+
 	"github.com/kataras/iris/v12"
 )
 
@@ -15,7 +18,7 @@ import (
 type ISvcDapp interface {
 	Query(query dto.Transaction, did string) (interface{}, *dto.Problem)
 	Invoke(req dto.Transaction, did string) (interface{}, *dto.Problem)
-	CreateAsset(req dto.Asset, did, channel, chaincode, signer string) (interface{}, *dto.Problem)
+	CreateAsset(req dto.CreateAsset, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem)
 }
 
 type svcDapp struct {
@@ -63,16 +66,19 @@ func (s *svcDapp) Invoke(req dto.Transaction, did string) (interface{}, *dto.Pro
 	return qResult, nil
 }
 
-func (s *svcDapp) CreateAsset(req dto.Asset, did, channel, chaincode, signer string) (interface{}, *dto.Problem) {
-
-	b, _ := lib.ToMap(&req, "json")
+func (s *svcDapp) CreateAsset(req dto.CreateAsset, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem) {
+	asset := mapper.MapCreateAsset2Asset(req)
+	// Assets have ID <Code>+<Year>+<Month>+<Day>+<Hour>+<Minute>+<Second> of the time when were created
+	asset.ID = fmt.Sprintf("%s%s", schema.DocType, time.Now().Format("20060102150405"))
+	asset.Status = dto.New
+	b, _ := lib.ToMap(&asset, "json")
 
 	tx := dto.Transaction{
 		RequestCommon: dto.RequestCommon{Headers: dto.RequestHeaders{CommonHeaders: dto.CommonHeaders{
 			PayloadType:  "object",
-			Signer:       signer,
-			ChannelID:    channel,
-			ChaincodeID:  chaincode,
+			Signer:       queryParams.Signer,
+			ChannelID:    queryParams.Channel,
+			ChaincodeID:  queryParams.Chaincode,
 			ContractName: "",
 		}}},
 		Function:   "CreateAsset", //TODO: esto si puede quedar anclado en el codigo, pero recomiendo que muevas todas TxName al schema/constants.go o un fichero .go similar

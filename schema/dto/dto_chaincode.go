@@ -32,8 +32,8 @@ type Asset struct {
 	SecretaryValidating   string          `json:"secretary_validating"`
 	DeanValidating        string          `json:"dean_validating"`
 	RectorValidating      string          `json:"rector_validating"`
-	FacultyVolumeFolio    string          `json:"volume_folio_faculty" validate:"regex=(\\d+,\\d+)"`
-	UniversityVolumeFolio string          `json:"volume_folio_university" validate:"regex=(\\d+,\\d+)"`
+	FacultyVolumeFolio    string          `json:"volume_folio_faculty" validate:"required"`
+	UniversityVolumeFolio string          `json:"volume_folio_university" validate:"required"`
 	InvalidReason         string          `json:"invalid_reason"`
 	Status                StateValidation `json:"certificate_status" validate:"gte=0,lte=4"`
 }
@@ -45,8 +45,8 @@ type CreateAsset struct {
 	Accredited            string `json:"accredited" validate:"required"`
 	Date                  string `json:"date" validate:"required"`
 	CreatedBy             string `json:"created_by" validate:"required"`
-	FacultyVolumeFolio    string `json:"volume_folio_faculty" validate:"regex=(\\d+,\\d+)"`
-	UniversityVolumeFolio string `json:"volume_folio_university" validate:"regex=(\\d+,\\d+)"`
+	FacultyVolumeFolio    string `json:"volume_folio_faculty" validate:"required"`
+	UniversityVolumeFolio string `json:"volume_folio_university" validate:"required"`
 }
 
 type InvalidateAsset struct {
