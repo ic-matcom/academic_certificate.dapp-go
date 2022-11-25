@@ -101,6 +101,17 @@ func (r *RepoUser) GetRoles() ([]models.Role, error) {
 	return roles, result.Error
 }
 
+// InvalidateUser Invalidate user, remove all access privileges
+func (r *RepoUser) InvalidateUser(userID int) (models.User, error) {
+	var modelUser models.User
+	if result := r.DB.First(&modelUser, userID); result.Error != nil {
+		return models.User{}, result.Error
+	}
+	modelUser.Role = models.Role_Invalid
+	result := r.DB.Save(&modelUser)
+	return modelUser, result.Error
+}
+
 func (r *RepoUser) InitDB() {
 	dbURL := "postgres://pg:pass@localhost:5432/users"
 	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})

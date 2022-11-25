@@ -83,11 +83,12 @@ func NewAuthHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 			guardUserManagerRouter.Use(*mdwAuthChecker) // registering access token checker middleware
 
 			guardUserManagerRouter.Get("", hero.Handler(h.getUsers))
-			guardUserManagerRouter.Get("/roles", hero.Handler(h.getRoles))
 			guardUserManagerRouter.Post("", hero.Handler(h.postUser))
 			guardUserManagerRouter.Get("/{id:string}", hero.Handler(h.getUserById))
 			guardUserManagerRouter.Put("/{id:string}", hero.Handler(h.putUserById))
 			guardUserManagerRouter.Delete("/{id:string}", hero.Handler(h.deleteUserById))
+			guardUserManagerRouter.Get("/roles", hero.Handler(h.getRoles))
+			guardUserManagerRouter.Put("/invalidate_user/{id:string}", hero.Handler(h.invalidateUser))
 		}
 	}
 
@@ -226,6 +227,36 @@ func (h HAuth) getRoles(ctx iris.Context, params dto.InjectedParam, service serv
 		return
 	}
 	resp, problem := service.GetRolesSvc()
+	if problem != nil {
+		(*h.response).ResErr(problem, &ctx)
+		return
+	}
+	h.response.ResOKWithData(resp, &ctx)
+}
+
+// invalidateUser Remove user permissions .
+// @Summary Remove user permissions
+// @Tags Users
+// @Security ApiKeyAuth
+// @Produce  json
+// @Param Authorization header string   true   "Insert access token"   default(Bearer <Add access token here>)
+// @Param id 			path   int      true   "User ID"
+// @Success 200 {object} []dto.UserResponse "OK"
+// @Failure 401 {object} dto.Problem "err.unauthorized"
+// @Failure 500 {object} dto.Problem "err.generic
+// @Router /users/invalidate_user/{id} [put]
+func (h HAuth) invalidateUser(ctx iris.Context, params dto.InjectedParam, service service.ISvcUser) {
+	if params.Role != models.Role_SystemAdmin {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
+	id := ctx.Params().GetIntDefault("id", -1)
+	if id == -1 {
+		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
+		return
+	}
+
+	resp, problem := service.InvalidateUserSvc(id)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
