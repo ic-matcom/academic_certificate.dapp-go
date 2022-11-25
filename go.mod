@@ -59,7 +59,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hyperledger/fabric-config v0.0.5 // indirect
 	github.com/hyperledger/fabric-lib-go v1.0.0 // indirect
-	github.com/hyperledger/fabric-protos-go v0.0.0-20211118165945-23d738fc3553 // indirect
+	github.com/hyperledger/fabric-protos-go v0.0.0-20220613214546-bf864f01d75e // indirect
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/iris-contrib/httpexpect/v2 v2.3.1 // indirect
 	github.com/iris-contrib/jade v1.1.4 // indirect
@@ -100,6 +100,7 @@ require (
 	github.com/prometheus/common v0.7.0 // indirect
 	github.com/prometheus/procfs v0.0.8 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
+	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/schollz/closestmatch v2.1.0+incompatible // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
@@ -131,8 +132,8 @@ require (
 	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
 	golang.org/x/tools v0.1.12 // indirect
-	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
-	google.golang.org/grpc v1.29.1 // indirect
+	google.golang.org/genproto v0.0.0-20220718134204-073382fd740c // indirect
+	google.golang.org/grpc v1.48.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

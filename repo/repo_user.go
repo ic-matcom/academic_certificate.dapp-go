@@ -101,6 +101,17 @@ func (r *RepoUser) GetRoles() ([]models.Role, error) {
 	return roles, result.Error
 }
 
+// InvalidateUser Invalidate user, remove all access privileges
+func (r *RepoUser) InvalidateUser(userID int) (models.User, error) {
+	var modelUser models.User
+	if result := r.DB.First(&modelUser, userID); result.Error != nil {
+		return models.User{}, result.Error
+	}
+	modelUser.Role = models.Role_Invalid
+	result := r.DB.Save(&modelUser)
+	return modelUser, result.Error
+}
+
 func (r *RepoUser) InitDB() {
 	dbURL := "postgres://pg:pass@localhost:5432/users"
 	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
@@ -185,27 +196,33 @@ func (r *RepoUser) PopulateRolTable() {
 		return
 	}
 	r.DB.Create(&models.Role{
-		Name:        models.Role_Invalid,
+		Label:       models.Role_Invalid,
+		Name:        "Usuario Invalidado",
 		Description: "Usuario que le fueron quitados sus privilegios.",
 	})
 	r.DB.Create(&models.Role{
-		Name:        models.Role_SystemAdmin,
+		Label:       models.Role_SystemAdmin,
+		Name:        "Administrador de Sistemas",
 		Description: "Usuario que puede gestionar los usuarios de la dapp.",
 	})
 	r.DB.Create(&models.Role{
-		Name:        models.Role_CertificateAdmin,
+		Label:       models.Role_CertificateAdmin,
+		Name:        "Administrador de Certificados",
 		Description: "Usuario que puede gestionar los certificados almacenados.",
 	})
 	r.DB.Create(&models.Role{
-		Name:        models.Role_Secretary,
+		Label:       models.Role_Secretary,
+		Name:        "Secretario General",
 		Description: "Usuario que valida los certificados emitidos.",
 	})
 	r.DB.Create(&models.Role{
-		Name:        models.Role_Dean,
+		Label:       models.Role_Dean,
+		Name:        "Decano de Facultad",
 		Description: "Usuario que valida los certificados emitidos.",
 	})
 	r.DB.Create(&models.Role{
-		Name:        models.Role_Rector,
+		Label:       models.Role_Rector,
+		Name:        "Rector de Universidad",
 		Description: "Usuario que valida los certificados emitidos.",
 	})
 }

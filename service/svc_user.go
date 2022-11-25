@@ -24,6 +24,7 @@ type ISvcUser interface {
 	PutUserSvc(userID int, user dto.UserData) (dto.UserResponse, *dto.Problem)
 	PostUserSvc(user dto.UserData) (dto.UserResponse, *dto.Problem)
 	DeleteUserSvc(userID int) (dto.UserResponse, *dto.Problem)
+	InvalidateUserSvc(userID int) (dto.UserResponse, *dto.Problem)
 }
 
 type svcUser struct {
@@ -101,6 +102,14 @@ func (s *svcUser) PostUserSvc(user dto.UserData) (dto.UserResponse, *dto.Problem
 
 func (s *svcUser) DeleteUserSvc(userID int) (dto.UserResponse, *dto.Problem) {
 	user, err := s.repoUser.RemoveUser(userID)
+	if err != nil {
+		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
+	}
+	return mapper.MapModelUser2DtoUserResponse(user), nil
+}
+
+func (s *svcUser) InvalidateUserSvc(userID int) (dto.UserResponse, *dto.Problem) {
+	user, err := s.repoUser.InvalidateUser(userID)
 	if err != nil {
 		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}

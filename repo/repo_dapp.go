@@ -99,7 +99,7 @@ func (r *RepoDapp) Query(query dto.Transaction, did string) ([]byte, error) {
 		// if a isSchema is true, the payload property in the body must be a JSON structure
 		argsMap, ok := query.Payload.(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("the \"payload\" property must be JSON if a isSchema property is true")
+			return nil, fmt.Errorf("the \"payload\" property must be JSON if a payloadType property is \"object\"")
 		}
 
 		res, err := jsoniter.MarshalToString(argsMap)
@@ -174,10 +174,10 @@ func (r *RepoDapp) Invoke(query dto.Transaction, did string) ([]byte, error) {
 	var args_ []string
 
 	if query.Headers.PayloadType == "object" {
-		// if a isSchema is true, the payload property in the body must be a JSON structure
-		argsMap, ok := query.Payload.(map[string]interface{})
+		// if a payloadType is array, the payload property in the body must be a JSON structure
+		argsMap, ok := query.Payload.(map[string]any)
 		if !ok {
-			return nil, fmt.Errorf("the \"payload\" property must be JSON if a isSchema property is true")
+			return nil, fmt.Errorf("the \"payload\" property must be JSON if a payloadType property is \"object\"")
 		}
 
 		res, err := jsoniter.MarshalToString(argsMap)

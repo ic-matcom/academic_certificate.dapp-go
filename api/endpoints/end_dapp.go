@@ -5,6 +5,7 @@ import (
 	"dapp/repo"
 	"dapp/schema"
 	"dapp/schema/dto"
+	"dapp/schema/models"
 	"dapp/service"
 	"dapp/service/utils"
 	"encoding/json"
@@ -46,16 +47,25 @@ func NewDappHandler(app *iris.Application, mdwAuthChecker *context.Handler, svcR
 	// Simple group: v1
 	v1 := app.Party("/api/v1")
 	{
+		publicAPI := v1.Party("/dapp")
+		{
+			publicAPI.Get("/certificates_by_state/{state: int}", hero.Handler(h.getCertificatesByState))
+			publicAPI.Get("/certificates_by_accredited/{accredited: string}", hero.Handler(h.getCertificatesByAccredited))
+			publicAPI.Get("/certificates/{id: string}", hero.Handler(h.getAssetById))
+		}
 		// registering protected / guarded router
 		protectedAPI := v1.Party("/dapp")
 		{
 			// --- GROUP / PARTY MIDDLEWARES ---
 			protectedAPI.Use(*mdwAuthChecker)
 
-			protectedAPI.Get("/certificates_by_state/{state: int}", hero.Handler(h.getCertificatesByState))
-			protectedAPI.Get("/certificates_by_accredited/{accredited: string}", hero.Handler(h.getCertificatesByAccredited))
 			protectedAPI.Post("/query", hero.Handler(h.postQuery))
 			protectedAPI.Post("/transaction", hero.Handler(h.postTransaction))
+			protectedAPI.Post("/certificates", hero.Handler(h.postCreateAsset))
+			protectedAPI.Put("/certificates", hero.Handler(h.putUpdateAsset))
+			protectedAPI.Put("/validate_certificate", hero.Handler(h.putValidateCertificate))
+			protectedAPI.Put("/invalidate_certificate", hero.Handler(h.putInvalidateCertificate))
+			protectedAPI.Delete("/certificates/{id: string}", hero.Handler(h.deleteAssetById))
 		}
 	}
 	return h
@@ -113,66 +123,298 @@ func (h DappHandler) postQuery(ctx *context.Context, params dto.InjectedParam) {
 // @Failure 504 {object} dto.Problem "err.network"
 // @Router /dapp/transaction [post]
 func (h DappHandler) postTransaction(ctx iris.Context, params dto.InjectedParam) {
+	if params.Role != models.Role_CertificateAdmin {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
 	// getting data from client
 	var requestData dto.Transaction
 
-	fmt.Println("2")
 	// unmarshalling the json and check
 	if err := ctx.ReadJSON(&requestData); err != nil {
 		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
 		return
 	}
-	fmt.Println("3")
 	// trying to submit the transaction
 	bcRes, problem := (*h.service).Invoke(requestData, params.Username)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
 	}
-	fmt.Println("4")
+
+	(*h.response).ResOKWithData(bcRes, &ctx)
+}
+
+// postCreateAsset Create Asset in ledger
+// @Summary Send transaction to peers
+// @description.markdown CreateAsset
+// @Tags Certificate
+// @Security ApiKeyAuth
+// @Accept  json
+// @Produce json
+// @Param	Authorization	header	string	        true  "Insert access token" default(Bearer <Add access token here>)
+// @Param   channel         query   string          true  "Insert channel" default(mychannel)"
+// @Param   chaincode       query   string          true  "Insert chaincode id" default(certificate)"
+// @Param   signer          query   string          true  "Insert signer" default(User1)"
+// @Param 	Transaction		body 	dto.CreateAsset	true  "Transaction Data"
+// @Success 202 {object} dto.Asset "OK"
+// @Failure 401 {object} dto.Problem "err.unauthorized"
+// @Failure 400 {object} dto.Problem "err.processing_param"
+// @Failure 502 {object} dto.Problem "err.bad_gateway"
+// @Failure 504 {object} dto.Problem "err.network"
+// @Router /dapp/certificates [post]
+func (h DappHandler) postCreateAsset(ctx iris.Context, params dto.InjectedParam) {
+	if params.Role != models.Role_CertificateAdmin {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
+	queryParams := new(dto.QueryParamChaincode)
+	lib.ParamsToStruct(ctx, queryParams)
+
+	var requestData dto.CreateAsset
+	// unmarshalling the json and check
+	if err := ctx.ReadJSON(&requestData); err != nil {
+		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
+		return
+	}
+	// trying to submit the transaction
+	bcRes, problem := (*h.service).CreateAsset(&requestData, params.Username, queryParams)
+	if problem != nil {
+		(*h.response).ResErr(problem, &ctx)
+		return
+	}
+
+	(*h.response).ResOKWithData(bcRes, &ctx)
+}
+
+// putUpdateAsset Update Asset in ledger with given data
+// @Summary Send transaction to peers
+// @Tags Certificate
+// @Security ApiKeyAuth
+// @Accept  json
+// @Produce json
+// @Param	Authorization	header	string	        true  "Insert access token" default(Bearer <Add access token here>)
+// @Param   channel         query   string          true  "Insert channel" default(mychannel)"
+// @Param   chaincode       query   string          true  "Insert chaincode id" default(certificate)"
+// @Param   signer          query   string          true  "Insert signer" default(User1)"
+// @Param 	Transaction		body 	dto.Asset    	true  "Transaction Data"
+// @Success 202 {object} dto.Asset "OK"
+// @Failure 401 {object} dto.Problem "err.unauthorized"
+// @Failure 400 {object} dto.Problem "err.processing_param"
+// @Failure 502 {object} dto.Problem "err.bad_gateway"
+// @Failure 504 {object} dto.Problem "err.network"
+// @Router /dapp/certificates [put]
+func (h DappHandler) putUpdateAsset(ctx iris.Context, params dto.InjectedParam) {
+	if params.Role != models.Role_CertificateAdmin {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
+	queryParams := new(dto.QueryParamChaincode)
+	lib.ParamsToStruct(ctx, queryParams)
+
+	var requestData dto.Asset
+	// unmarshalling the json and check
+	if err := ctx.ReadJSON(&requestData); err != nil {
+		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
+		return
+	}
+	// trying to submit the transaction
+	bcRes, problem := (*h.service).UpdateAsset(&requestData, params.Username, queryParams)
+	if problem != nil {
+		(*h.response).ResErr(problem, &ctx)
+		return
+	}
+
+	(*h.response).ResOKWithData(bcRes, &ctx)
+}
+
+// getAssetById Get Asset from ledger with specified ID
+// @Summary Send transaction to peers
+// @Tags Certificate
+// @Security ApiKeyAuth
+// @Accept  json
+// @Produce json
+// @Param 	id		    	path 	string     true	 "Cartificate ID"
+// @Param   channel         query   string     true  "Insert channel" default(mychannel)"
+// @Param   chaincode       query   string     true  "Insert chaincode id" default(certificate)"
+// @Param   signer          query   string     true  "Insert signer" default(User1)"
+// @Success 202 {object} dto.Asset "OK"
+// @Failure 401 {object} dto.Problem "err.unauthorized"
+// @Failure 400 {object} dto.Problem "err.processing_param"
+// @Failure 502 {object} dto.Problem "err.bad_gateway"
+// @Failure 504 {object} dto.Problem "err.network"
+// @Router /dapp/certificates/{id} [get]
+func (h DappHandler) getAssetById(ctx iris.Context) {
+	id := ctx.Params().GetString("id")
+	queryParams := new(dto.QueryParamChaincode)
+	lib.ParamsToStruct(ctx, queryParams)
+
+	bcRes, problem := (*h.service).GetAsset(id, schema.GuestUser, queryParams)
+	if problem != nil {
+		(*h.response).ResErr(problem, &ctx)
+		return
+	}
+
+	(*h.response).ResOKWithData(bcRes, &ctx)
+}
+
+// putValidateCertificate Validate Asset in ledger
+// @Summary Send transaction to peers
+// @Tags Certificate
+// @Security ApiKeyAuth
+// @Accept  json
+// @Produce json
+// @Param	Authorization	header	string	        true  "Insert access token" default(Bearer <Add access token here>)
+// @Param   channel         query   string          true  "Insert channel" default(mychannel)"
+// @Param   chaincode       query   string          true  "Insert chaincode id" default(certificate)"
+// @Param   signer          query   string          true  "Insert signer" default(User1)"
+// @Param 	Transaction		body 	dto.SignAsset	true  "Transaction Data"
+// @Success 202 {object} dto.Asset "OK"
+// @Failure 401 {object} dto.Problem "err.unauthorized"
+// @Failure 400 {object} dto.Problem "err.processing_param"
+// @Failure 502 {object} dto.Problem "err.bad_gateway"
+// @Failure 504 {object} dto.Problem "err.network"
+// @Router /dapp/validate_certificate [put]
+func (h DappHandler) putValidateCertificate(ctx iris.Context, params dto.InjectedParam) {
+	if lib.Contains([]string{models.Role_Secretary, models.Role_Dean, models.Role_Rector}, params.Role) {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
+	queryParams := new(dto.QueryParamChaincode)
+	lib.ParamsToStruct(ctx, queryParams)
+
+	var requestData dto.SignAsset
+	// unmarshalling the json and check
+	if err := ctx.ReadJSON(&requestData); err != nil {
+		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
+		return
+	}
+	// trying to submit the transaction
+	bcRes, problem := (*h.service).ValidateAsset(&requestData, &params, queryParams)
+	if problem != nil {
+		(*h.response).ResErr(problem, &ctx)
+		return
+	}
+
+	(*h.response).ResOKWithData(bcRes, &ctx)
+}
+
+// putInvalidateCertificate Invalidate Asset in ledger
+// @Summary Send transaction to peers
+// @Tags Certificate
+// @Security ApiKeyAuth
+// @Accept  json
+// @Produce json
+// @Param	Authorization	header	string	             true  "Insert access token" default(Bearer <Add access token here>)
+// @Param   channel         query   string               true  "Insert channel" default(mychannel)"
+// @Param   chaincode       query   string               true  "Insert chaincode id" default(certificate)"
+// @Param   signer          query   string               true  "Insert signer" default(User1)"
+// @Param 	Transaction		body 	dto.InvalidateAsset	 true  "Transaction Data"
+// @Success 202 {object} dto.Asset "OK"
+// @Failure 401 {object} dto.Problem "err.unauthorized"
+// @Failure 400 {object} dto.Problem "err.processing_param"
+// @Failure 502 {object} dto.Problem "err.bad_gateway"
+// @Failure 504 {object} dto.Problem "err.network"
+// @Router /dapp/invalidate_certificate [put]
+func (h DappHandler) putInvalidateCertificate(ctx iris.Context, params dto.InjectedParam) {
+	if lib.Contains([]string{models.Role_Secretary, models.Role_Dean, models.Role_Rector, models.Role_CertificateAdmin}, params.Role) {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
+	queryParams := new(dto.QueryParamChaincode)
+	lib.ParamsToStruct(ctx, queryParams)
+
+	var requestData dto.InvalidateAsset
+	// unmarshalling the json and check
+	if err := ctx.ReadJSON(&requestData); err != nil {
+		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
+		return
+	}
+	// trying to submit the transaction
+	bcRes, problem := (*h.service).InvalidateAsset(&requestData, &params, queryParams)
+	if problem != nil {
+		(*h.response).ResErr(problem, &ctx)
+		return
+	}
+
+	(*h.response).ResOKWithData(bcRes, &ctx)
+}
+
+// deleteAssetById Delete Asset from ledger with specified ID
+// @Summary Send transaction to peers
+// @Tags Certificate
+// @Security ApiKeyAuth
+// @Accept  json
+// @Produce json
+// @Param	Authorization	header	string	   true  "Insert access token" default(Bearer <Add access token here>)
+// @Param 	id		    	path 	string     true	 "Cartificate ID"
+// @Param   channel         query   string     true  "Insert channel" default(mychannel)"
+// @Param   chaincode       query   string     true  "Insert chaincode id" default(certificate)"
+// @Param   signer          query   string     true  "Insert signer" default(User1)"
+// @Success 202 {object} dto.Asset "OK"
+// @Failure 401 {object} dto.Problem "err.unauthorized"
+// @Failure 400 {object} dto.Problem "err.processing_param"
+// @Failure 502 {object} dto.Problem "err.bad_gateway"
+// @Failure 504 {object} dto.Problem "err.network"
+// @Router /dapp/certificates/{id} [delete]
+func (h DappHandler) deleteAssetById(ctx iris.Context, params dto.InjectedParam) {
+	if params.Role != models.Role_CertificateAdmin {
+		(*h.response).ResUnauthorized(&ctx)
+		return
+	}
+	id := ctx.Params().GetString("id")
+	queryParams := new(dto.QueryParamChaincode)
+	lib.ParamsToStruct(ctx, queryParams)
+
+	bcRes, problem := (*h.service).DeleteAsset(id, params.Username, queryParams)
+	if problem != nil {
+		(*h.response).ResErr(problem, &ctx)
+		return
+	}
 
 	(*h.response).ResOKWithData(bcRes, &ctx)
 }
 
 // getCertificatesByState Performs a query in blockchain for certificates with some state
 // @Summary Performs a query in blockchain for certificates with some state
-// @description.markdown Query
-// @Tags DApp
+// @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
 // @Produce json
-// @Param	Authorization	header	string	true 	"Insert access token" default(Bearer <Add access token here>)
 // @Param 	state		    path 	int 	true	"State of the assets"
-// @Param 	page_limit		query 	int 	false	"Amount of assets per page"
+// @Param 	page_limit		query 	int 	true	"Amount of assets per page" default(5)"
 // @Param   bookmark        query   string  false   "Bookmark to know last asset gotten"
+// @Param   channel         query   string  true    "Insert channel" default(mychannel)"
+// @Param   chaincode       query   string  true    "Insert chaincode id" default(certificate)"
+// @Param   signer          query   string  true    "Insert signer" default(User1)"
 // @Success 200 {object} dto.QueryResult "OK"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 400 {object} dto.Problem "err.processing_param"
 // @Failure 502 {object} dto.Problem "err.bad_gateway"
 // @Failure 504 {object} dto.Problem "err.network"
 // @Router /dapp/certificates_by_state/{state} [get]
-func (h DappHandler) getCertificatesByState(ctx *context.Context, params dto.InjectedParam) {
+func (h DappHandler) getCertificatesByState(ctx *context.Context) {
 	state := ctx.Params().GetIntDefault("state", -1)
 	if state == -1 {
 		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
 		return
 	}
-	page_limit := ctx.URLParamIntDefault("page_limit", 5)
-	bookmark := ctx.URLParamDefault("bookmark", "")
+	qp := new(dto.QueryParamChaincode)
+	lib.ParamsToStruct(ctx, qp)
 
 	queryJSON := fmt.Sprintf(`
 	{
 		"func": "common:QueryAssetsWithPagination",
 		"headers": {
-		  "chaincode": "certificate",
-		  "channel": "mychannel",
+		  "chaincode": "%s",
+		  "channel": "%s",
 		  "contractName": "",
 		  "payloadType": "object",
-		  "signer": "User1"
+		  "signer": "%s"
 		},
-		"payload": {"queryString":{"selector":{"docType":"CERT", "certificate_status":{"$eq":%d}}}, "pageSize":%d, "bookmark":"%s"},
+		"payload": {"queryString":{"selector":{"docType":"CERT", "certificate_status":%d}}, "pageSize":%d, "bookmark":"%s"},
 		"strongRead": false
-	}`, state, page_limit, bookmark)
+	}`, qp.Chaincode, qp.Channel, qp.Signer, state, qp.PageLimit, qp.Bookmark)
 	var query dto.Transaction
 
 	// unmarshalling the json and check
@@ -181,7 +423,7 @@ func (h DappHandler) getCertificatesByState(ctx *context.Context, params dto.Inj
 		return
 	}
 
-	bcRes, problem := (*h.service).Query(query, params.Username)
+	bcRes, problem := (*h.service).Query(query, schema.GuestUser)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
@@ -192,52 +434,54 @@ func (h DappHandler) getCertificatesByState(ctx *context.Context, params dto.Inj
 
 // getNewCertificates Performs a query in blockchain for certificates with some state
 // @Summary Performs a query in blockchain for certificates with some state
-// @description.markdown Query
-// @Tags DApp
+// @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
 // @Produce json
-// @Param	Authorization	header	string	true 	"Insert access token" default(Bearer <Add access token here>)
 // @Param 	accredited  	path 	string 	true	"Person to whom the certificates were emitted"
-// @Param 	page_limit		query 	int 	false	"Amount of assets per page"
+// @Param 	page_limit		query 	int 	true	"Amount of assets per page" default(5)"
 // @Param   bookmark        query   string  false   "Bookmark to know last asset gotten"
+// @Param   channel         query   string  true    "Insert channel" default(mychannel)"
+// @Param   chaincode       query   string  true    "Insert chaincode id" default(certificate)"
+// @Param   signer          query   string  true    "Insert signer" default(User1)"
 // @Success 200 {object} dto.QueryResult "OK"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
 // @Failure 400 {object} dto.Problem "err.processing_param"
 // @Failure 502 {object} dto.Problem "err.bad_gateway"
 // @Failure 504 {object} dto.Problem "err.network"
 // @Router /dapp/certificates_by_accredited/{accredited} [get]
-func (h DappHandler) getCertificatesByAccredited(ctx *context.Context, params dto.InjectedParam) {
-	accredited := ctx.Params().GetDefault("accredited", "")
+func (h DappHandler) getCertificatesByAccredited(ctx *context.Context) {
+	accredited := ctx.Params().GetStringDefault("accredited", "")
 	if accredited == "" {
 		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
 		return
 	}
-	page_limit := ctx.URLParamIntDefault("page_limit", 5)
-	bookmark := ctx.URLParamDefault("bookmark", "")
+
+	qp := new(dto.QueryParamChaincode)
+	lib.ParamsToStruct(ctx, qp)
 
 	queryJSON := fmt.Sprintf(`
 	{
 		"func": "common:QueryAssetsWithPagination",
 		"headers": {
-		  "chaincode": "certificate",
-		  "channel": "mychannel",
+		  "chaincode": "%s",
+		  "channel": "%s",
 		  "contractName": "",
 		  "payloadType": "object",
-		  "signer": "User1"
+		  "signer": "%s"
 		},
 		"payload": {"queryString":{"selector":{"docType":"CERT", "accredited":"%s"}}, "pageSize":%d, "bookmark":"%s"},
 		"strongRead": false
-	}`, accredited, page_limit, bookmark)
-	var query dto.Transaction
+	}`, qp.Chaincode, qp.Channel, qp.Signer, accredited, qp.PageLimit, qp.Bookmark)
 
+	var query dto.Transaction
 	// unmarshalling the json and check
 	if err := json.Unmarshal([]byte(queryJSON), &query); err != nil {
 		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
 		return
 	}
 
-	bcRes, problem := (*h.service).Query(query, params.Username)
+	bcRes, problem := (*h.service).Query(query, schema.GuestUser)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return

@@ -72,3 +72,18 @@ const (
 )
 
 // endregion =============================================================================
+
+// region ========= CERTIFICATES =========================================================
+
+const (
+	DocType         = "CERT"
+	ValidateAsset   = "ValidateAsset"
+	InvalidateAsset = "InvalidateAsset"
+	ReadAsset       = "ReadAsset"
+	CreateAsset     = "CreateAsset"
+	UpdateAsset     = "UpdateAsset"
+	DeleteAsset     = "DeleteAsset"
+	GuestUser       = "GuestUser"
+)
+
+// endregion =============================================================================
