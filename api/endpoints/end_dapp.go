@@ -276,7 +276,7 @@ func (h DappHandler) getAssetById(ctx iris.Context) {
 // @Failure 504 {object} dto.Problem "err.network"
 // @Router /dapp/validate_certificate [put]
 func (h DappHandler) putValidateCertificate(ctx iris.Context, params dto.InjectedParam) {
-	if lib.Contains([]string{models.Role_Secretary, models.Role_Dean, models.Role_Rector}, params.Role) {
+	if !lib.Contains([]string{models.Role_Secretary, models.Role_Dean, models.Role_Rector}, params.Role) {
 		(*h.response).ResUnauthorized(&ctx)
 		return
 	}
