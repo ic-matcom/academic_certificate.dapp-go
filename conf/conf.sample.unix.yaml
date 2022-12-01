@@ -10,6 +10,7 @@ TkMaxAge: 180
 
 StoreDBPath: "./db/data.db"       # buntdb DB file location
 
+UsersDBUrl: "postgres://pg:pass@localhost:5432/users" # url that pints to database for users
 
 # =====   CRON JOB  =======
 # A periodic task

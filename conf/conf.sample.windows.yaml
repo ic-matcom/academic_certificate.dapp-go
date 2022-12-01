@@ -24,3 +24,6 @@ CppPath: "conf/cpp.sample.windows.yaml"              # cpp = connection profile
 WalletFolder: "wallet"
 DappIdentityUser: "User1"                          # dapp user identity to authenticate normal dapp ops in the HLF network
 DappIdentityAdmin: "Admin"                         # dapp admin identity to authenticate admin dapp ops in the HLF network
+
+# Users DB
+UsersDBUrl: "postgres://pg:pass@localhost:5432/users" # url that pints to database for users
