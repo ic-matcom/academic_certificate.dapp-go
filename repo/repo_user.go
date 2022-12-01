@@ -31,7 +31,7 @@ var onceRU sync.Once
 func NewRepoUser(svcConf *utils.SvcConfig) *RepoUser {
 	onceRU.Do(func() {
 		singletonRU = &RepoUser{DBLocation: svcConf.StoreDBPath}
-		singletonRU.InitDB()
+		singletonRU.InitDB(svcConf.UsersDBUrl)
 		singletonRU.PopulateDB()
 	})
 	return singletonRU
@@ -112,9 +112,7 @@ func (r *RepoUser) InvalidateUser(userID int) (models.User, error) {
 	return modelUser, result.Error
 }
 
-func (r *RepoUser) InitDB() {
-	// TODO: move dbURL to configuration files conf.sample.unix, conf.sample.windows and conf.yaml
-	dbURL := "postgres://pg:pass@localhost:5432/users"
+func (r *RepoUser) InitDB(dbURL string) {
 	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 	if err != nil {
 		log.Fatalln(err)

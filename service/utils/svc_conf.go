@@ -5,6 +5,7 @@ import (
 
 	"dapp/lib"
 	"dapp/schema"
+
 	"github.com/tkanos/gonfig"
 )
 
@@ -23,6 +24,7 @@ type conf struct { //nolint:maligned
 
 	// STORE DB
 	StoreDBPath string
+	UsersDBUrl  string
 
 	// CRON JOB
 	CronEnabled bool

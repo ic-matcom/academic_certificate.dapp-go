@@ -58,7 +58,7 @@ type InvalidateAsset struct {
 }
 type CreateAsset struct {
 	Certification         string `json:"certification" validate:"required"`
-	GoldCertificate       bool   `json:"gold_certificate" validate:"required"`
+	GoldCertificate       bool   `json:"gold_certificate"`
 	Emitter               string `json:"emitter" validate:"required"`
 	Accredited            string `json:"accredited" validate:"required"`
 	Date                  string `json:"date" validate:"required"`
