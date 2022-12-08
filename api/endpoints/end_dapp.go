@@ -254,7 +254,11 @@ func (h DappHandler) putUpdateAsset(ctx iris.Context, params dto.InjectedParam) 
 func (h DappHandler) getAssetById(ctx iris.Context) {
 	id := ctx.Params().GetString("id")
 	queryParams := new(dto.QueryParamChaincode)
-	lib.ParamsToStruct(ctx, queryParams)
+	err := lib.ParamsToStruct(ctx, queryParams)
+	if err != nil {
+		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
+		return
+	}
 
 	bcRes, problem := (*h.service).GetAsset(id, schema.GuestUser, queryParams)
 	if problem != nil {
