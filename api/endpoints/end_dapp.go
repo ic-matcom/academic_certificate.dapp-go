@@ -8,8 +8,6 @@ import (
 	"dapp/schema/models"
 	"dapp/service"
 	"dapp/service/utils"
-	"encoding/json"
-	"fmt"
 
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -97,7 +95,6 @@ func (h DappHandler) postQuery(ctx *context.Context, params dto.InjectedParam) {
 		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
 		return
 	}
-
 	bcRes, problem := (*h.service).Query(query, params.Username)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
@@ -395,40 +392,20 @@ func (h DappHandler) deleteAssetById(ctx iris.Context, params dto.InjectedParam)
 // @Router /dapp/certificates_by_state/{state} [get]
 func (h DappHandler) getCertificatesByState(ctx *context.Context) {
 	state := ctx.Params().GetIntDefault("state", -1)
+	pageLimit := ctx.URLParamIntDefault("page_limit", 5)
 	if state == -1 {
 		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
 		return
 	}
 	qp := new(dto.QueryParamChaincode)
 	lib.ParamsToStruct(ctx, qp)
+	qp.PageLimit = pageLimit
 
-	queryJSON := fmt.Sprintf(`
-	{
-		"func": "common:QueryAssetsWithPagination",
-		"headers": {
-		  "chaincode": "%s",
-		  "channel": "%s",
-		  "contractName": "",
-		  "payloadType": "object",
-		  "signer": "%s"
-		},
-		"payload": {"queryString":{"selector":{"docType":"CERT", "certificate_status":%d}}, "pageSize":%d, "bookmark":"%s"},
-		"strongRead": false
-	}`, qp.Chaincode, qp.Channel, qp.Signer, state, qp.PageLimit, qp.Bookmark)
-	var query dto.Transaction
-
-	// unmarshalling the json and check
-	if err := json.Unmarshal([]byte(queryJSON), &query); err != nil {
-		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
-		return
-	}
-
-	bcRes, problem := (*h.service).Query(query, schema.GuestUser)
+	bcRes, problem := (*h.service).GetAssetsByState(state, schema.GuestUser, qp)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
 	}
-
 	(*h.response).ResOKWithData(bcRes, &ctx)
 }
 
@@ -452,6 +429,7 @@ func (h DappHandler) getCertificatesByState(ctx *context.Context) {
 // @Router /dapp/certificates_by_accredited/{accredited} [get]
 func (h DappHandler) getCertificatesByAccredited(ctx *context.Context) {
 	accredited := ctx.Params().GetStringDefault("accredited", "")
+	pageLimit := ctx.URLParamIntDefault("page_limit", 5)
 	if accredited == "" {
 		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
 		return
@@ -459,34 +437,13 @@ func (h DappHandler) getCertificatesByAccredited(ctx *context.Context) {
 
 	qp := new(dto.QueryParamChaincode)
 	lib.ParamsToStruct(ctx, qp)
+	qp.PageLimit = pageLimit
 
-	queryJSON := fmt.Sprintf(`
-	{
-		"func": "common:QueryAssetsWithPagination",
-		"headers": {
-		  "chaincode": "%s",
-		  "channel": "%s",
-		  "contractName": "",
-		  "payloadType": "object",
-		  "signer": "%s"
-		},
-		"payload": {"queryString":{"selector":{"docType":"CERT", "accredited":"%s"}}, "pageSize":%d, "bookmark":"%s"},
-		"strongRead": false
-	}`, qp.Chaincode, qp.Channel, qp.Signer, accredited, qp.PageLimit, qp.Bookmark)
-
-	var query dto.Transaction
-	// unmarshalling the json and check
-	if err := json.Unmarshal([]byte(queryJSON), &query); err != nil {
-		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
-		return
-	}
-
-	bcRes, problem := (*h.service).Query(query, schema.GuestUser)
+	bcRes, problem := (*h.service).GetAssetsByAccredited(accredited, schema.GuestUser, qp)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
 	}
-
 	(*h.response).ResOKWithData(bcRes, &ctx)
 }
 
