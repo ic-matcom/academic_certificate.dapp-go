@@ -169,7 +169,11 @@ func (h DappHandler) postCreateAsset(ctx iris.Context, params dto.InjectedParam)
 		return
 	}
 	queryParams := new(dto.QueryParamChaincode)
-	lib.ParamsToStruct(ctx, queryParams)
+	err := lib.ParamsToStruct(ctx, queryParams)
+	if err != nil {
+		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
+		return
+	}
 
 	var requestData dto.CreateAsset
 	// unmarshalling the json and check
@@ -210,7 +214,11 @@ func (h DappHandler) putUpdateAsset(ctx iris.Context, params dto.InjectedParam) 
 		return
 	}
 	queryParams := new(dto.QueryParamChaincode)
-	lib.ParamsToStruct(ctx, queryParams)
+	err := lib.ParamsToStruct(ctx, queryParams)
+	if err != nil {
+		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
+		return
+	}
 
 	var requestData dto.Asset
 	// unmarshalling the json and check
@@ -281,7 +289,11 @@ func (h DappHandler) putValidateCertificate(ctx iris.Context, params dto.Injecte
 		return
 	}
 	queryParams := new(dto.QueryParamChaincode)
-	lib.ParamsToStruct(ctx, queryParams)
+	err := lib.ParamsToStruct(ctx, queryParams)
+	if err != nil {
+		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
+		return
+	}
 
 	var requestData dto.SignAsset
 	// unmarshalling the json and check
@@ -322,7 +334,11 @@ func (h DappHandler) putInvalidateCertificate(ctx iris.Context, params dto.Injec
 		return
 	}
 	queryParams := new(dto.QueryParamChaincode)
-	lib.ParamsToStruct(ctx, queryParams)
+	err := lib.ParamsToStruct(ctx, queryParams)
+	if err != nil {
+		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
+		return
+	}
 
 	var requestData dto.InvalidateAsset
 	// unmarshalling the json and check
@@ -364,7 +380,11 @@ func (h DappHandler) deleteAssetById(ctx iris.Context, params dto.InjectedParam)
 	}
 	id := ctx.Params().GetString("id")
 	queryParams := new(dto.QueryParamChaincode)
-	lib.ParamsToStruct(ctx, queryParams)
+	err := lib.ParamsToStruct(ctx, queryParams)
+	if err != nil {
+		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
+		return
+	}
 
 	bcRes, problem := (*h.service).DeleteAsset(id, params.Username, queryParams)
 	if problem != nil {
@@ -400,7 +420,11 @@ func (h DappHandler) getCertificatesByState(ctx *context.Context) {
 		return
 	}
 	qp := new(dto.QueryParamChaincode)
-	lib.ParamsToStruct(ctx, qp)
+	err := lib.ParamsToStruct(ctx, qp)
+	if err != nil {
+		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
+		return
+	}
 
 	queryJSON := fmt.Sprintf(`
 	{
@@ -458,7 +482,11 @@ func (h DappHandler) getCertificatesByAccredited(ctx *context.Context) {
 	}
 
 	qp := new(dto.QueryParamChaincode)
-	lib.ParamsToStruct(ctx, qp)
+	err := lib.ParamsToStruct(ctx, qp)
+	if err != nil {
+		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
+		return
+	}
 
 	queryJSON := fmt.Sprintf(`
 	{
