@@ -392,13 +392,14 @@ func (h DappHandler) deleteAssetById(ctx iris.Context, params dto.InjectedParam)
 // @Router /dapp/certificates_by_state/{state} [get]
 func (h DappHandler) getCertificatesByState(ctx *context.Context) {
 	state := ctx.Params().GetIntDefault("state", -1)
-	pageLimit := ctx.URLParamIntDefault("page_limit", 5)
-	if state == -1 {
+	pageLimit := ctx.URLParamIntDefault("page_limit", -1)
+
+	qp := new(dto.QueryParamChaincode)
+	err := lib.ParamsToStruct(ctx, qp)
+	if err != nil || state == -1 || pageLimit == -1 {
 		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
 		return
 	}
-	qp := new(dto.QueryParamChaincode)
-	lib.ParamsToStruct(ctx, qp)
 	qp.PageLimit = pageLimit
 
 	bcRes, problem := (*h.service).GetAssetsByState(state, schema.GuestUser, qp)
@@ -429,14 +430,14 @@ func (h DappHandler) getCertificatesByState(ctx *context.Context) {
 // @Router /dapp/certificates_by_accredited/{accredited} [get]
 func (h DappHandler) getCertificatesByAccredited(ctx *context.Context) {
 	accredited := ctx.Params().GetStringDefault("accredited", "")
-	pageLimit := ctx.URLParamIntDefault("page_limit", 5)
-	if accredited == "" {
+	pageLimit := ctx.URLParamIntDefault("page_limit", -1)
+
+	qp := new(dto.QueryParamChaincode)
+	err := lib.ParamsToStruct(ctx, qp)
+	if err != nil || accredited == "" || pageLimit == -1 {
 		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
 		return
 	}
-
-	qp := new(dto.QueryParamChaincode)
-	lib.ParamsToStruct(ctx, qp)
 	qp.PageLimit = pageLimit
 
 	bcRes, problem := (*h.service).GetAssetsByAccredited(accredited, schema.GuestUser, qp)
