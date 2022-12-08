@@ -8,8 +8,6 @@ import (
 	"dapp/schema/models"
 	"dapp/service"
 	"dapp/service/utils"
-	"encoding/json"
-	"fmt"
 
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -97,7 +95,6 @@ func (h DappHandler) postQuery(ctx *context.Context, params dto.InjectedParam) {
 		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
 		return
 	}
-
 	bcRes, problem := (*h.service).Query(query, params.Username)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
@@ -146,7 +143,7 @@ func (h DappHandler) postTransaction(ctx iris.Context, params dto.InjectedParam)
 }
 
 // postCreateAsset Create Asset in ledger
-// @Summary Send transaction to peers
+// @Summary Create Certificate
 // @description.markdown CreateAsset
 // @Tags Certificate
 // @Security ApiKeyAuth
@@ -192,7 +189,8 @@ func (h DappHandler) postCreateAsset(ctx iris.Context, params dto.InjectedParam)
 }
 
 // putUpdateAsset Update Asset in ledger with given data
-// @Summary Send transaction to peers
+// @Summary Update Certificate
+// @Description Update data from certificate with specified ID
 // @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
@@ -237,7 +235,8 @@ func (h DappHandler) putUpdateAsset(ctx iris.Context, params dto.InjectedParam) 
 }
 
 // getAssetById Get Asset from ledger with specified ID
-// @Summary Send transaction to peers
+// @Summary Get Certificate
+// @Description Get Certificate data from ledger with specified ID
 // @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
@@ -267,7 +266,8 @@ func (h DappHandler) getAssetById(ctx iris.Context) {
 }
 
 // putValidateCertificate Validate Asset in ledger
-// @Summary Send transaction to peers
+// @Summary Validate Certificate
+// @Description Validate certificate with specified ID. The order for validation is: Secretary -> Dean -> Rector
 // @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
@@ -312,7 +312,8 @@ func (h DappHandler) putValidateCertificate(ctx iris.Context, params dto.Injecte
 }
 
 // putInvalidateCertificate Invalidate Asset in ledger
-// @Summary Send transaction to peers
+// @Summary Invalidate Certificate
+// @Description Invalidate Certificate with specified ID, Must be provided details about that invalidation.
 // @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
@@ -357,7 +358,8 @@ func (h DappHandler) putInvalidateCertificate(ctx iris.Context, params dto.Injec
 }
 
 // deleteAssetById Delete Asset from ledger with specified ID
-// @Summary Send transaction to peers
+// @Summary Delete Certificate
+// @Description Delete Certificate from ledger with specified ID
 // @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
@@ -396,7 +398,8 @@ func (h DappHandler) deleteAssetById(ctx iris.Context, params dto.InjectedParam)
 }
 
 // getCertificatesByState Performs a query in blockchain for certificates with some state
-// @Summary Performs a query in blockchain for certificates with some state
+// @Summary Performs a query in blockchain for certificates with a specified state
+// @Description Return Certificates that have the specified state.
 // @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
@@ -415,49 +418,27 @@ func (h DappHandler) deleteAssetById(ctx iris.Context, params dto.InjectedParam)
 // @Router /dapp/certificates_by_state/{state} [get]
 func (h DappHandler) getCertificatesByState(ctx *context.Context) {
 	state := ctx.Params().GetIntDefault("state", -1)
-	if state == -1 {
+	pageLimit := ctx.URLParamIntDefault("page_limit", -1)
+
+	qp := new(dto.QueryParamChaincode)
+	err := lib.ParamsToStruct(ctx, qp)
+	if err != nil || state == -1 || pageLimit == -1 {
 		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
 		return
 	}
-	qp := new(dto.QueryParamChaincode)
-	err := lib.ParamsToStruct(ctx, qp)
-	if err != nil {
-		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
-		return
-	}
+	qp.PageLimit = pageLimit
 
-	queryJSON := fmt.Sprintf(`
-	{
-		"func": "common:QueryAssetsWithPagination",
-		"headers": {
-		  "chaincode": "%s",
-		  "channel": "%s",
-		  "contractName": "",
-		  "payloadType": "object",
-		  "signer": "%s"
-		},
-		"payload": {"queryString":{"selector":{"docType":"CERT", "certificate_status":%d}}, "pageSize":%d, "bookmark":"%s"},
-		"strongRead": false
-	}`, qp.Chaincode, qp.Channel, qp.Signer, state, qp.PageLimit, qp.Bookmark)
-	var query dto.Transaction
-
-	// unmarshalling the json and check
-	if err := json.Unmarshal([]byte(queryJSON), &query); err != nil {
-		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
-		return
-	}
-
-	bcRes, problem := (*h.service).Query(query, schema.GuestUser)
+	bcRes, problem := (*h.service).GetAssetsByState(state, schema.GuestUser, qp)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
 	}
-
 	(*h.response).ResOKWithData(bcRes, &ctx)
 }
 
 // getNewCertificates Performs a query in blockchain for certificates with some state
-// @Summary Performs a query in blockchain for certificates with some state
+// @Summary Get Certificates of Accredited
+// @Description Get all Certificates that belongs to the specified Accredited
 // @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
@@ -476,45 +457,21 @@ func (h DappHandler) getCertificatesByState(ctx *context.Context) {
 // @Router /dapp/certificates_by_accredited/{accredited} [get]
 func (h DappHandler) getCertificatesByAccredited(ctx *context.Context) {
 	accredited := ctx.Params().GetStringDefault("accredited", "")
-	if accredited == "" {
-		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
-		return
-	}
+	pageLimit := ctx.URLParamIntDefault("page_limit", -1)
 
 	qp := new(dto.QueryParamChaincode)
 	err := lib.ParamsToStruct(ctx, qp)
-	if err != nil {
-		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
+	if err != nil || accredited == "" || pageLimit == -1 {
+		h.response.ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: schema.ErrDetInvalidField}, &ctx)
 		return
 	}
+	qp.PageLimit = pageLimit
 
-	queryJSON := fmt.Sprintf(`
-	{
-		"func": "common:QueryAssetsWithPagination",
-		"headers": {
-		  "chaincode": "%s",
-		  "channel": "%s",
-		  "contractName": "",
-		  "payloadType": "object",
-		  "signer": "%s"
-		},
-		"payload": {"queryString":{"selector":{"docType":"CERT", "accredited":"%s"}}, "pageSize":%d, "bookmark":"%s"},
-		"strongRead": false
-	}`, qp.Chaincode, qp.Channel, qp.Signer, accredited, qp.PageLimit, qp.Bookmark)
-
-	var query dto.Transaction
-	// unmarshalling the json and check
-	if err := json.Unmarshal([]byte(queryJSON), &query); err != nil {
-		(*h.response).ResErr(&dto.Problem{Status: iris.StatusBadRequest, Title: schema.ErrProcParam, Detail: err.Error()}, &ctx)
-		return
-	}
-
-	bcRes, problem := (*h.service).Query(query, schema.GuestUser)
+	bcRes, problem := (*h.service).GetAssetsByAccredited(accredited, schema.GuestUser, qp)
 	if problem != nil {
 		(*h.response).ResErr(problem, &ctx)
 		return
 	}
-
 	(*h.response).ResOKWithData(bcRes, &ctx)
 }
 

@@ -28,3 +28,12 @@ type UserData struct {
 	Email      string `json:"email" validate:"required,email"`
 	Role       string `json:"rol" validate:"required"`
 }
+
+type EditUserData struct {
+	Username   string `json:"username,omitempty"`
+	Passphrase string `json:"passphrase,omitempty"`
+	FirstName  string `json:"firstname,omitempty"`
+	LastName   string `json:"lastname,omitempty"`
+	Email      string `json:"email,omitempty"`
+	Role       string `json:"rol,omitempty"`
+}

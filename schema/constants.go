@@ -76,14 +76,15 @@ const (
 // region ========= CERTIFICATES =========================================================
 
 const (
-	DocType         = "CERT"
-	ValidateAsset   = "ValidateAsset"
-	InvalidateAsset = "InvalidateAsset"
-	ReadAsset       = "ReadAsset"
-	CreateAsset     = "CreateAsset"
-	UpdateAsset     = "UpdateAsset"
-	DeleteAsset     = "DeleteAsset"
-	GuestUser       = "GuestUser"
+	DocType            = "CERT"
+	ValidateAsset      = "ValidateAsset"
+	InvalidateAsset    = "InvalidateAsset"
+	ReadAsset          = "ReadAsset"
+	CreateAsset        = "CreateAsset"
+	UpdateAsset        = "UpdateAsset"
+	DeleteAsset        = "DeleteAsset"
+	QueryAssetsWithPag = "common:QueryAssetsWithPagination"
+	GuestUser          = "GuestUser"
 )
 
 // endregion =============================================================================

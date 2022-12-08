@@ -82,3 +82,33 @@ type QueryParamChaincode struct {
 type GetRequestCC struct {
 	ID string `json:"id"`
 }
+
+type PayloadGetByStatus struct {
+	QueryString QueryStringGetByStatus `json:"queryString" mapstructure:"queryString"`
+	PageSize    int                    `json:"pageSize" mapstructure:"pageSize"`
+	Bookmark    string                 `json:"bookmark" mapstructure:"bookmark"`
+}
+
+type QueryStringGetByStatus struct {
+	Selector SelectorGetByStatus `json:"selector" mapstructure:"selector"`
+}
+
+type SelectorGetByStatus struct {
+	DocType           string `json:"docType" mapstructure:"docType"`
+	CertificateStatus int    `json:"certificate_status" mapstructure:"certificate_status"`
+}
+
+type PayloadGetByAccredited struct {
+	QueryString QueryStringGetByAccredited `json:"queryString" mapstructure:"queryString"`
+	PageSize    int                        `json:"pageSize" mapstructure:"pageSize"`
+	Bookmark    string                     `json:"bookmark" mapstructure:"bookmark"`
+}
+
+type QueryStringGetByAccredited struct {
+	Selector SelectorGetByAccredited `json:"selector" mapstructure:"selector"`
+}
+
+type SelectorGetByAccredited struct {
+	DocType    string `json:"docType" mapstructure:"docType"`
+	Accredited string `json:"accredited" mapstructure:"accredited"`
+}

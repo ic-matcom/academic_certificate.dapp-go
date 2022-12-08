@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/kataras/iris/v12"
+	"github.com/mitchellh/mapstructure"
 )
 
 // region ======== SETUP =================================================================
@@ -20,6 +21,8 @@ type ISvcDapp interface {
 	Query(query dto.Transaction, did string) (interface{}, *dto.Problem)
 	Invoke(req dto.Transaction, did string) (interface{}, *dto.Problem)
 	GetAsset(id string, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem)
+	GetAssetsByState(status int, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem)
+	GetAssetsByAccredited(accredited string, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem)
 	CreateAsset(req *dto.CreateAsset, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem)
 	UpdateAsset(req *dto.Asset, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem)
 	ValidateAsset(req *dto.SignAsset, userParam *dto.InjectedParam, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem)
@@ -72,8 +75,10 @@ func (s *svcDapp) Invoke(req dto.Transaction, did string) (interface{}, *dto.Pro
 	return qResult, nil
 }
 
-func (s *svcDapp) GetAsset(id string, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem) {
-	b, _ := lib.ToMap(&dto.GetRequestCC{ID: id}, "json")
+func (s *svcDapp) GenericGetAssets(payload interface{}, funcName string, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem) {
+	var b map[string]interface{}
+	mapstructure.Decode(payload, &b)
+
 	tx := dto.Transaction{
 		RequestCommon: dto.RequestCommon{Headers: dto.RequestHeaders{CommonHeaders: dto.CommonHeaders{
 			PayloadType:  "object",
@@ -82,10 +87,11 @@ func (s *svcDapp) GetAsset(id string, did string, queryParams *dto.QueryParamCha
 			ChaincodeID:  queryParams.Chaincode,
 			ContractName: "",
 		}}},
-		Function:   schema.ReadAsset,
+		Function:   funcName,
 		Payload:    b,
 		StrongRead: false,
 	}
+	fmt.Println(b)
 	// requesting blockchain ledger
 	result, e := (*s.repoDapp).Query(tx, did)
 	if e != nil {
@@ -99,6 +105,38 @@ func (s *svcDapp) GetAsset(id string, did string, queryParams *dto.QueryParamCha
 		ResponsePayload: dPayload,
 	}
 	return qResult, nil
+}
+
+func (s *svcDapp) GetAsset(id string, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem) {
+	return s.GenericGetAssets(&dto.GetRequestCC{ID: id}, schema.ReadAsset, did, queryParams)
+}
+
+func (s *svcDapp) GetAssetsByState(status int, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem) {
+	payload := dto.PayloadGetByStatus{
+		QueryString: dto.QueryStringGetByStatus{
+			Selector: dto.SelectorGetByStatus{
+				DocType:           schema.DocType,
+				CertificateStatus: status,
+			},
+		},
+		PageSize: queryParams.PageLimit,
+		Bookmark: queryParams.Bookmark,
+	}
+	return s.GenericGetAssets(payload, schema.QueryAssetsWithPag, did, queryParams)
+}
+
+func (s *svcDapp) GetAssetsByAccredited(accredited string, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem) {
+	payload := dto.PayloadGetByAccredited{
+		QueryString: dto.QueryStringGetByAccredited{
+			Selector: dto.SelectorGetByAccredited{
+				DocType:    schema.DocType,
+				Accredited: accredited,
+			},
+		},
+		PageSize: queryParams.PageLimit,
+		Bookmark: queryParams.Bookmark,
+	}
+	return s.GenericGetAssets(payload, schema.QueryAssetsWithPag, did, queryParams)
 }
 
 func (s *svcDapp) CreateAsset(req *dto.CreateAsset, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem) {
