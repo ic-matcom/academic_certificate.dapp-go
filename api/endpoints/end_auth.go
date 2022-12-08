@@ -301,9 +301,9 @@ func (h HAuth) getUserById(ctx iris.Context, params dto.InjectedParam, service s
 // @Tags Users
 // @Security ApiKeyAuth
 // @Produce  json
-// @Param Authorization header string       true "Insert access token" default(Bearer <Add access token here>)
-// @Param   id          path   int     	    true "The unique identifier for the user within the account"     Format(int)
-// @Param 	Transaction	body   dto.UserData	true	"User Data"
+// @Param Authorization header string           true "Insert access token" default(Bearer <Add access token here>)
+// @Param   id          path   int     	        true "The unique identifier for the user within the account"     Format(int)
+// @Param 	Transaction	body   dto.EditUserData	true	"User Data"
 // @Success 200 {object} dto.UserResponse "OK"
 // @Failure 400 {object} dto.Problem "err.processing_param"
 // @Failure 401 {object} dto.Problem "err.unauthorized"
@@ -322,7 +322,7 @@ func (h HAuth) putUserById(ctx iris.Context, params dto.InjectedParam, service s
 	}
 
 	// getting data from client
-	var requestData dto.UserData
+	var requestData dto.EditUserData
 
 	// unmarshalling the json and check
 	if err := ctx.ReadJSON(&requestData); err != nil {
