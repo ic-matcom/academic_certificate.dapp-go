@@ -143,7 +143,7 @@ func (h DappHandler) postTransaction(ctx iris.Context, params dto.InjectedParam)
 }
 
 // postCreateAsset Create Asset in ledger
-// @Summary Send transaction to peers
+// @Summary Create Certificate
 // @description.markdown CreateAsset
 // @Tags Certificate
 // @Security ApiKeyAuth
@@ -185,7 +185,8 @@ func (h DappHandler) postCreateAsset(ctx iris.Context, params dto.InjectedParam)
 }
 
 // putUpdateAsset Update Asset in ledger with given data
-// @Summary Send transaction to peers
+// @Summary Update Certificate
+// @Description Update data from certificate with specified ID
 // @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
@@ -226,7 +227,8 @@ func (h DappHandler) putUpdateAsset(ctx iris.Context, params dto.InjectedParam) 
 }
 
 // getAssetById Get Asset from ledger with specified ID
-// @Summary Send transaction to peers
+// @Summary Get Certificate
+// @Description Get Certificate data from ledger with specified ID
 // @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
@@ -256,7 +258,8 @@ func (h DappHandler) getAssetById(ctx iris.Context) {
 }
 
 // putValidateCertificate Validate Asset in ledger
-// @Summary Send transaction to peers
+// @Summary Validate Certificate
+// @Description Validate certificate with specified ID. The order for validation is: Secretary -> Dean -> Rector
 // @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
@@ -297,7 +300,8 @@ func (h DappHandler) putValidateCertificate(ctx iris.Context, params dto.Injecte
 }
 
 // putInvalidateCertificate Invalidate Asset in ledger
-// @Summary Send transaction to peers
+// @Summary Invalidate Certificate
+// @Description Invalidate Certificate with specified ID, Must be provided details about that invalidation.
 // @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
@@ -338,7 +342,8 @@ func (h DappHandler) putInvalidateCertificate(ctx iris.Context, params dto.Injec
 }
 
 // deleteAssetById Delete Asset from ledger with specified ID
-// @Summary Send transaction to peers
+// @Summary Delete Certificate
+// @Description Delete Certificate from ledger with specified ID
 // @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
@@ -373,7 +378,8 @@ func (h DappHandler) deleteAssetById(ctx iris.Context, params dto.InjectedParam)
 }
 
 // getCertificatesByState Performs a query in blockchain for certificates with some state
-// @Summary Performs a query in blockchain for certificates with some state
+// @Summary Performs a query in blockchain for certificates with a specified state
+// @Description Return Certificates that have the specified state.
 // @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
@@ -411,7 +417,8 @@ func (h DappHandler) getCertificatesByState(ctx *context.Context) {
 }
 
 // getNewCertificates Performs a query in blockchain for certificates with some state
-// @Summary Performs a query in blockchain for certificates with some state
+// @Summary Get Certificates of Accredited
+// @Description Get all Certificates that belongs to the specified Accredited
 // @Tags Certificate
 // @Security ApiKeyAuth
 // @Accept  json
