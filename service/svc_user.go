@@ -99,6 +99,9 @@ func (s *svcUser) PutUserSvc(userID int, user dto.EditUserData) (dto.UserRespons
 	if user.Email != "" {
 		userInDB.Email = user.Email
 	}
+	if user.Role != "" {
+		userInDB.Role = user.Role
+	}
 	resUser, err := s.repoUser.UpdateUser(userID, userInDB)
 	if err != nil {
 		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())

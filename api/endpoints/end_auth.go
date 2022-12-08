@@ -162,8 +162,8 @@ func (h HAuth) logout(ctx iris.Context) {
 	h.response.ResOK(&ctx)
 }
 
-// getUserProfile Get user from the BD.
-// @Summary Get user
+// getUserProfile Get currently logged user profile.
+// @Summary Get currently logged user profile
 // @Tags Auth
 // @Security ApiKeyAuth
 // @Produce  json
@@ -183,6 +183,7 @@ func (h HAuth) getUserProfile(ctx iris.Context, params dto.InjectedParam, servic
 
 // getUsers Get all users from the BD.
 // @Summary Get users
+// @description.markdown GetAllUsers
 // @Tags Users
 // @Security ApiKeyAuth
 // @Produce  json
@@ -266,7 +267,7 @@ func (h HAuth) invalidateUser(ctx iris.Context, params dto.InjectedParam, servic
 
 // getUserById Get user by ID
 // @Summary Get user by ID
-// @Description Returns information about an account by ID
+// @Description Returns information about the user with the specified ID
 // @Tags Users
 // @Security ApiKeyAuth
 // @Produce  json
@@ -298,6 +299,8 @@ func (h HAuth) getUserById(ctx iris.Context, params dto.InjectedParam, service s
 }
 
 // putUserById Update user.
+// @Summary Update user
+// @Description Update data from user with the specified ID. Fields that are not passed will not be modified.
 // @Tags Users
 // @Security ApiKeyAuth
 // @Produce  json
@@ -339,6 +342,8 @@ func (h HAuth) putUserById(ctx iris.Context, params dto.InjectedParam, service s
 }
 
 // postUser Create user.
+// @Summary Create user
+// @Description Create a new User.
 // @Tags Users
 // @Security ApiKeyAuth
 // @Produce  json
@@ -372,6 +377,8 @@ func (h HAuth) postUser(ctx iris.Context, params dto.InjectedParam, service serv
 }
 
 // deleteUser Delete user.
+// @Summary Delete user
+// @Description Delete user with specified ID from DB.
 // @Tags Users
 // @Security ApiKeyAuth
 // @Produce  json
