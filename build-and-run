@@ -5,5 +5,7 @@ echo "### BUILDING PROJECT..."
 go build -o dapp
 echo "### SETTING ENVIROMENT VARIABLES..."
 source ./setenv.sh
+echo "### RUNNING POSGRESQL Docker container..."
+docker-compose -f docker-compose-extra.yml up -d
 echo "### RUNNING PROJECT..."
 ./dapp

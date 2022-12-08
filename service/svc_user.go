@@ -21,7 +21,7 @@ type ISvcUser interface {
 	GetUserSvc(userID int) (dto.UserResponse, *dto.Problem)
 	GetUserByUsernameSvc(username string) (dto.UserResponse, *dto.Problem)
 	GetUsersSvc(pagination *dto.Pagination) (*dto.Pagination, *dto.Problem)
-	PutUserSvc(userID int, user dto.UserData) (dto.UserResponse, *dto.Problem)
+	PutUserSvc(userID int, user dto.EditUserData) (dto.UserResponse, *dto.Problem)
 	PostUserSvc(user dto.UserData) (dto.UserResponse, *dto.Problem)
 	DeleteUserSvc(userID int) (dto.UserResponse, *dto.Problem)
 	InvalidateUserSvc(userID int) (dto.UserResponse, *dto.Problem)
@@ -78,11 +78,31 @@ func (s *svcUser) GetUsersSvc(pagination *dto.Pagination) (*dto.Pagination, *dto
 	return res, nil
 }
 
-func (s *svcUser) PutUserSvc(userID int, user dto.UserData) (dto.UserResponse, *dto.Problem) {
-	passphraseEncoded, _ := lib.Checksum("SHA256", []byte(user.Passphrase))
-	user.Passphrase = passphraseEncoded
-	modelUser := mapper.MapUserData2ModelUser(userID, user)
-	resUser, err := s.repoUser.UpdateUser(userID, modelUser)
+func (s *svcUser) PutUserSvc(userID int, user dto.EditUserData) (dto.UserResponse, *dto.Problem) {
+	userInDB, err := s.repoUser.GetUser(userID)
+	if err != nil {
+		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
+	}
+	if user.Username != "" {
+		userInDB.Username = user.Username
+	}
+	if user.Passphrase != "" {
+		passphraseEncoded, _ := lib.Checksum("SHA256", []byte(user.Passphrase))
+		userInDB.Passphrase = passphraseEncoded
+	}
+	if user.FirstName != "" {
+		userInDB.FirstName = user.FirstName
+	}
+	if user.LastName != "" {
+		userInDB.LastName = user.LastName
+	}
+	if user.Email != "" {
+		userInDB.Email = user.Email
+	}
+	if user.Role != "" {
+		userInDB.Role = user.Role
+	}
+	resUser, err := s.repoUser.UpdateUser(userID, userInDB)
 	if err != nil {
 		return dto.UserResponse{}, lib.NewProblem(iris.StatusExpectationFailed, schema.ErrBuntdb, err.Error())
 	}
