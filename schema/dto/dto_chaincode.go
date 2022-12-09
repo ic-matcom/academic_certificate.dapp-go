@@ -80,7 +80,7 @@ type QueryParamChaincode struct {
 	PageLimit int    `query:"page_limit"`
 }
 type GetRequestCC struct {
-	ID string `json:"id"`
+	ID string `json:"id" mapstructure:"id"`
 }
 
 type PayloadGetByStatus struct {

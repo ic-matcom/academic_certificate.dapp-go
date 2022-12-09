@@ -77,7 +77,10 @@ func (s *svcDapp) Invoke(req dto.Transaction, did string) (interface{}, *dto.Pro
 
 func (s *svcDapp) GenericGetAssets(payload interface{}, funcName string, did string, queryParams *dto.QueryParamChaincode) (interface{}, *dto.Problem) {
 	var b map[string]interface{}
-	mapstructure.Decode(payload, &b)
+	err := mapstructure.Decode(payload, &b)
+	if err != nil {
+		return nil, lib.NewProblem(iris.StatusBadRequest, schema.ErrJsonParse, err.Error())
+	}
 
 	tx := dto.Transaction{
 		RequestCommon: dto.RequestCommon{Headers: dto.RequestHeaders{CommonHeaders: dto.CommonHeaders{
@@ -91,7 +94,7 @@ func (s *svcDapp) GenericGetAssets(payload interface{}, funcName string, did str
 		Payload:    b,
 		StrongRead: false,
 	}
-	fmt.Println(b)
+
 	// requesting blockchain ledger
 	result, e := (*s.repoDapp).Query(tx, did)
 	if e != nil {
